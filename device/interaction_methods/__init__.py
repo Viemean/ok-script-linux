@@ -1,0 +1,16 @@
+from ok.device.interaction_methods.adb import ADBInteraction
+from ok.device.interaction_methods.base import BaseInteraction
+from ok.device.interaction_methods.browser import BrowserInteraction
+from ok.device.interaction_methods.do_nothing import DoNothingInteraction
+from ok.device.interaction_methods.keys import ADB_KEY_MAP, PYDIRECT_KEY_MAP, normalize_pydirect_key, vk_key_dict
+from ok.device.interaction_methods.pynput import PynputInteraction
+from ok.device.interaction_methods.swipe import insert_swipe
+from ok.device.interaction_methods.linux_uinput import LinuxUinputInteraction
+from ok.device.interaction_methods.linux_proton_post_message import LinuxProtonPostMessageInteraction
+
+import sys
+from ok.device.interaction_methods import linux_proton_post_message
+
+PostMessageInteraction = LinuxProtonPostMessageInteraction
+post_message = linux_proton_post_message
+sys.modules['ok.device.interaction_methods.post_message'] = linux_proton_post_message

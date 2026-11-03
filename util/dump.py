@@ -1,0 +1,28 @@
+import os
+import sys
+import threading
+import traceback
+
+from ok.util.file import get_relative_path
+
+
+def get_thread_name(thread_id):
+    for thread in threading.enumerate():
+        if thread.ident == thread_id:
+            return thread.name
+    return ""
+
+
+def dump_threads():
+    thread_dumps = []
+    for thread_id, frame in sys._current_frames().items():
+        thread_name = get_thread_name(thread_id)
+        thread_dump = f"Stack for thread {thread_id} (Name: {thread_name}):\n"
+        thread_dump += "".join(traceback.format_stack(frame))
+        thread_dumps.append(thread_dump)
+
+    output_file = get_relative_path(os.path.join('logs', "thread_dumps.txt"))
+    print(f'Dumping threads to {output_file}')
+
+    with open(output_file, "w", encoding='utf-8') as f:
+        f.write("\n\n".join(thread_dumps))
