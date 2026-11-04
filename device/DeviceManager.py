@@ -229,7 +229,10 @@ class DeviceManager:
         if self.windows_capture_config is not None:
             win = self.hwnd_window
             hwnd = win.hwnd if win else 0
-            nick = (win.title if win and win.title else None) or "Wuthering Waves"
+            default_title = (self.windows_capture_config.get('title') if self.windows_capture_config else None) or self.config.get('gui_title') or "Game"
+            if isinstance(default_title, re.Pattern):
+                default_title = self.config.get('gui_title') or "Game"
+            nick = (win.title if win and win.title else None) or default_title
             imei = f"pc_{hwnd}" if hwnd else "pc"
             width = win.width if win else 0
             height = win.height if win else 0

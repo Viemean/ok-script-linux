@@ -43,11 +43,31 @@ class LinuxProtonLauncher:
             self.config.save_file()
 
     @staticmethod
-    def detect_running_game_env() -> Optional[Dict[str, str]]:
+    def detect_running_game_env(target_exe: Optional[str] = None) -> Optional[Dict[str, str]]:
         """Scans /proc for active game process and extracts Proton container, arguments and environments."""
         proc_dir = Path("/proc")
         if not proc_dir.is_dir():
             return None
+
+        target_patterns = []
+        if target_exe:
+            target_patterns.append(Path(target_exe).stem.lower())
+            target_patterns.append(Path(target_exe).name.lower())
+        else:
+            try:
+                from ok import og
+                if og and og.config:
+                    cfg_exe = og.config.get("windows", {}).get("exe")
+                    if cfg_exe:
+                        if isinstance(cfg_exe, list):
+                            for e in cfg_exe:
+                                target_patterns.append(Path(e).stem.lower())
+                                target_patterns.append(Path(e).name.lower())
+                        elif isinstance(cfg_exe, str):
+                            target_patterns.append(Path(cfg_exe).stem.lower())
+                            target_patterns.append(Path(cfg_exe).name.lower())
+            except Exception:
+                pass
 
         # Find target game process and potential wrappers
         game_pids = []
@@ -60,7 +80,12 @@ class LinuxProtonLauncher:
                 if not raw_bytes:
                     continue
                 cmd_str = raw_bytes.decode("utf-8", errors="ignore").lower()
-                if "client-win64-shipping" in cmd_str or "wutheringwaves" in cmd_str:
+                matched = False
+                if target_patterns:
+                    matched = any(tp in cmd_str for tp in target_patterns)
+                else:
+                    matched = ".exe" in cmd_str
+                if matched:
                     pid = int(p.name)
                     game_pids.append(pid)
             except Exception:
@@ -215,10 +240,17 @@ class LinuxProtonLauncher:
         return bool(exe and (os.path.isfile(exe) or self.config.get('wrapper')))
 
     @staticmethod
-    def is_game_window_viewable(game_exe: str = "") -> bool:
+    def is_game_window_viewable(game_exe: str = "", title_pattern: Any = None) -> bool:
         """Checks if a matching game window is already mapped and viewable on desktop."""
         if os.environ.get("OK_TEST_MODE") == "1":
             return False
+        if title_pattern is None:
+            try:
+                from ok import og
+                if og and og.config:
+                    title_pattern = og.config.get("windows", {}).get("title")
+            except Exception:
+                pass
         try:
             import Xlib.display
             import Xlib.X
@@ -263,13 +295,14 @@ class LinuxProtonLauncher:
                             pass
 
                         lower_name = name.lower()
-                        if "鸣潮" in name or "wuthering waves" in lower_name:
-                            display.close()
-                            return True
-                        for c in cls_names:
-                            if "client-win64-shipping" in c or "wutheringwaves" in c:
+                        if title_pattern:
+                            if isinstance(title_pattern, re.Pattern) and title_pattern.search(name):
                                 display.close()
                                 return True
+                            elif str(title_pattern).lower() in lower_name:
+                                display.close()
+                                return True
+                        for c in cls_names:
                             if exe_basename and exe_basename in c:
                                 display.close()
                                 return True

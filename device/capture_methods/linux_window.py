@@ -33,11 +33,19 @@ class LinuxWindow:
         self._last_active = None
         self.stop_event = threading.Event()
 
-        self.title_pattern = title or re.compile(r"wuthering waves|鸣潮|Client-Win64-Shipping", re.IGNORECASE)
-        self.exe_names = [e.lower() for e in exe_names] if isinstance(exe_names, list) else (
-            [exe_names.lower()] if exe_names else ["client-win64-shipping.exe", "wutheringwaves.exe"]
-        )
-        self.hwnd_class = hwnd_class or "UnrealWindow"
+        if title:
+            self.title_pattern = re.compile(title, re.IGNORECASE) if isinstance(title, str) else title
+        else:
+            self.title_pattern = None
+
+        if isinstance(exe_names, list):
+            self.exe_names = [e.lower() for e in exe_names if e]
+        elif isinstance(exe_names, str):
+            self.exe_names = [exe_names.lower()]
+        else:
+            self.exe_names = []
+
+        self.hwnd_class = hwnd_class or ""
 
         self.hwnd = 0
         self.window_obj = None
@@ -164,7 +172,7 @@ class LinuxWindow:
                 return True, name
 
         # Match by title
-        if name:
+        if name and self.title_pattern:
             if isinstance(self.title_pattern, re.Pattern):
                 if self.title_pattern.search(name):
                     return True, name
