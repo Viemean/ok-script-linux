@@ -58,13 +58,35 @@ class WineAgentClient:
         if not proc_dir.is_dir():
             return None, None
 
+        target_bytes = []
+        try:
+            from ok import og
+            if og and og.config:
+                cfg_exe = og.config.get("windows", {}).get("exe")
+                if cfg_exe:
+                    if isinstance(cfg_exe, list):
+                        for e in cfg_exe:
+                            target_bytes.append(Path(e).stem.lower().encode())
+                    elif isinstance(cfg_exe, str):
+                        target_bytes.append(Path(cfg_exe).stem.lower().encode())
+        except Exception:
+            pass
+
         for p in proc_dir.glob("[0-9]*"):
             try:
                 env_file = p / "environ"
                 if not env_file.exists():
                     continue
                 raw_bytes = env_file.read_bytes()
-                if b"Client-Win64-Shipping" in raw_bytes and b"WINEPREFIX" in raw_bytes:
+                if b"WINEPREFIX" not in raw_bytes:
+                    continue
+                lower_raw = raw_bytes.lower()
+                matched = False
+                if target_bytes:
+                    matched = any(t in lower_raw for t in target_bytes)
+                else:
+                    matched = b".exe" in lower_raw
+                if matched:
                     wine_env = dict(os.environ)
                     for item in raw_bytes.split(b"\0"):
                         if b"=" in item:
@@ -116,11 +138,34 @@ class WineAgentClient:
             logger.error(f"ok-wine-agent.exe not found at {agent_exe}")
             return False
 
+        target_class = ""
+        target_title = ""
         try:
+            from ok import og
+            if og and og.config:
+                win_cfg = og.config.get("windows") or {}
+                target_class = win_cfg.get("hwnd_class") or ""
+                t = win_cfg.get("title")
+                if isinstance(t, str):
+                    target_title = t
+                elif hasattr(t, "pattern"):
+                    target_title = win_cfg.get("wine_title") or ""
+        except Exception:
+            pass
+
+        try:
+            cmd_args = [str(agent_exe.resolve()), str(self.port)]
+            if target_class:
+                cmd_args.append(str(target_class))
+                if target_title:
+                    cmd_args.append(str(target_title))
+            elif target_title:
+                cmd_args.extend(["", str(target_title)])
+
             if runner.endswith("proton"):
-                cmd = ["python3", runner, "run", str(agent_exe.resolve()), str(self.port)]
+                cmd = ["python3", runner, "run", *cmd_args]
             else:
-                cmd = [runner, str(agent_exe.resolve()), str(self.port)]
+                cmd = [runner, *cmd_args]
 
             self.proc = subprocess.Popen(
                 cmd,
@@ -207,6 +252,23 @@ class WineAgentClient:
                             return status == 0
                     except Exception:
                         pass
+            return False
+
+    def set_target_hwnd(self, hwnd: int) -> bool:
+        """Explicitly set target HWND in wine-agent."""
+        with self._send_lock:
+            self.target_hwnd = hwnd
+            if not self.sock:
+                return True
+            req = struct.pack("<IIQIQq", AGENT_MAGIC, CMD_SET_HWND, int(hwnd), 0, 0, 0)
+            try:
+                self.sock.sendall(req)
+                resp = self.sock.recv(16)
+                if len(resp) == 16:
+                    magic, status, cur_hwnd = struct.unpack("<IiQ", resp)
+                    return status == 0
+            except Exception as e:
+                logger.debug(f"WineAgent set_target_hwnd failed: {e}")
             return False
 
     def close(self):

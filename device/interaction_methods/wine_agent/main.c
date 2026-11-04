@@ -39,6 +39,8 @@ typedef struct {
 #pragma pack(pop)
 
 static HWND g_target_hwnd = NULL;
+static wchar_t g_target_class[128] = {0};
+static wchar_t g_target_title[128] = {0};
 
 /*
  * 枚举顶级窗口回调，匹配指定类名或标题的目标窗口。
@@ -55,12 +57,20 @@ static BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
     GetWindowTextW(hwnd, title, 255);
     GetClassNameW(hwnd, cls, 255);
 
-    if (wcsstr(cls, L"UnrealWindow") != NULL ||
-        wcsstr(title, L"鸣潮") != NULL ||
-        wcsstr(title, L"Wuthering Waves") != NULL ||
-        wcsstr(title, L"Client-Win64-Shipping") != NULL) {
+    if (g_target_class[0] != L'\0' && wcsstr(cls, g_target_class) != NULL) {
         *(HWND*)lParam = hwnd;
         return FALSE;
+    }
+    if (g_target_title[0] != L'\0' && wcsstr(title, g_target_title) != NULL) {
+        *(HWND*)lParam = hwnd;
+        return FALSE;
+    }
+    if (g_target_class[0] == L'\0' && g_target_title[0] == L'\0') {
+        if (wcsstr(cls, L"UnrealWindow") != NULL ||
+            wcsstr(cls, L"UnityWndClass") != NULL) {
+            *(HWND*)lParam = hwnd;
+            return FALSE;
+        }
     }
     return TRUE;
 }
@@ -164,6 +174,12 @@ int main(int argc, char** argv) {
         if (p > 1024 && p < 65536) {
             port = p;
         }
+    }
+    if (argc > 2 && argv[2][0] != '\0') {
+        mbstowcs(g_target_class, argv[2], 127);
+    }
+    if (argc > 3 && argv[3][0] != '\0') {
+        mbstowcs(g_target_title, argv[3], 127);
     }
 
     WSADATA wsaData;
