@@ -57,7 +57,7 @@ from ok.ui.qt.util.Alert import alert_error
 from ok.ui.qt.util.touch_scroll import enable_touch_scrolling
 from ok.ui.qt.util.pyappify_startup import get_startup_version_change
 from ok.ui.qt.widget.StartLoadingDialog import StartLoadingDialog
-from ok.util.GlobalConfig import basic_options, KILL_LAUNCHER_AFTER_START, NOTIFICATION_OPTION_NAME
+from ok.util.GlobalConfig import basic_options, NOTIFICATION_OPTION_NAME
 from ok.util.clazz import init_class_by_name
 from ok.util.process import restart_as_admin
 
@@ -493,9 +493,6 @@ class MainWindow(FluentWindow):
             logger.info("Window has fully displayed")
             from ok import og
             og.ok.start_runtime()
-            if self.basic_global_config.get(KILL_LAUNCHER_AFTER_START):
-                logger.info(f'MainWindow showEvent Kill Launcher After Start')
-                request_pyappify_shutdown()
             startup_version_change = get_startup_version_change()
             if self.version != self.main_window_config.get('last_version'):
                 self.main_window_config['last_version'] = self.version

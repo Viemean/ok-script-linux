@@ -56,7 +56,7 @@ UPDATE_METHOD_LABELS = {
 }
 UPDATE_METHOD_VALUES = {value: label for label, value in UPDATE_METHOD_LABELS.items()}
 
-# [LINUX-PORT-CRITICAL] Linux 分支专属核心适配：剔除 DirectML 并隐藏 Windows 启动项，合并时严禁覆盖
+# [LINUX-PORT-CRITICAL] Linux 分支专属核心适配：剔除 DirectML、隐藏 Windows 启动项与启动器关闭选项，合并时严禁覆盖
 _basic_options_default = {
     ENABLE_MCP_SERVER: False,
     'Auto Start Game When App Starts': False,
@@ -68,11 +68,11 @@ _basic_options_default = {
     'Capture Frame Rate Limit': 90,
     'ONNX Inference Threads': 4,
     'Start/Stop': 'F9',
-    KILL_LAUNCHER_AFTER_START: True,
 }
 _basic_options_type = {'Start/Stop': {'type': "drop_down", 'options': ['None', 'F9', 'F10', 'F11', 'F12']},
                        ENABLE_MCP_SERVER: {'type': 'mcp_server'},
                        'Launch with DX11': {'hidden': True},
+                       KILL_LAUNCHER_AFTER_START: {'hidden': True},
                        'Capture Frame Rate Limit': {'min': 0, 'max': 240},
                        'ONNX Inference Threads': {'min': 1, 'max': 32}}
 _basic_options_description = {ENABLE_MCP_SERVER: 'Allow local coding agents to control this app and run Python code',
