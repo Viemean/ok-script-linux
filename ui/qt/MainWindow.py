@@ -13,25 +13,6 @@ from qfluentwidgets.components.widgets.scroll_bar import ScrollBarHandleDisplayM
 from qfluentwidgets.common.style_sheet import updateStyleSheet
 
 _original_MessageBoxBase_keyPressEvent = MessageBoxBase.keyPressEvent
-_pyappify_stop_lock = threading.Lock()
-
-
-def request_pyappify_shutdown():
-    """Terminate the launcher without ever blocking Qt's GUI thread."""
-    def stop_launcher():
-        if not _pyappify_stop_lock.acquire(blocking=False):
-            return
-        try:
-            pyappify.kill_pyappify()
-        except Exception as error:
-            logger.warning(f'kill_pyappify failed: {error}')
-        finally:
-            _pyappify_stop_lock.release()
-
-    thread = threading.Thread(
-        target=stop_launcher, name='PyAppifyShutdown', daemon=True)
-    thread.start()
-    return thread
 
 
 def _patched_message_box_base_keyPressEvent(self, e):
@@ -730,5 +711,4 @@ class MainWindow(FluentWindow):
                 self.executor.request_destroy()
             event.accept()
             if not self.do_not_quit:
-                request_pyappify_shutdown()
                 QApplication.instance().exit()

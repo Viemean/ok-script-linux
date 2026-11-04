@@ -13,7 +13,6 @@ APP_LAUNCHER_AUTO_START = 'Auto Start {app_name}'
 APP_LAUNCHER_UPDATE_METHOD = 'Auto Update'
 APP_LAUNCHER_ACTION = 'Launcher'
 APP_LAUNCHER_OPEN = 'Open Launcher'
-KILL_LAUNCHER_AFTER_START = 'Kill Launcher After Start'
 ENABLE_MCP_SERVER = 'Enable MCP Server'
 NOTIFICATION_OPTION_NAME = 'Notification'
 SYSTEM_NOTIFICATION_ENABLED = 'System Notification'
@@ -71,8 +70,6 @@ _basic_options_default = {
 }
 _basic_options_type = {'Start/Stop': {'type': "drop_down", 'options': ['None', 'F9', 'F10', 'F11', 'F12']},
                        ENABLE_MCP_SERVER: {'type': 'mcp_server'},
-                       'Launch with DX11': {'hidden': True},
-                       KILL_LAUNCHER_AFTER_START: {'hidden': True},
                        'Capture Frame Rate Limit': {'min': 0, 'max': 240},
                        'ONNX Inference Threads': {'min': 1, 'max': 32}}
 _basic_options_description = {ENABLE_MCP_SERVER: 'Allow local coding agents to control this app and run Python code',
@@ -318,17 +315,12 @@ class AppLauncherConfig(dict):
         super().__init__(self._to_display_config(launcher_config))
 
     def _to_display_config(self, launcher_config):
-        display_config = {
+        return {
             APP_LAUNCHER_AUTO_START: launcher_config['auto_start'],
             APP_LAUNCHER_UPDATE_METHOD: UPDATE_METHOD_VALUES[launcher_config['update_method']],
         }
-        if self.basic_config is not None and KILL_LAUNCHER_AFTER_START in self.basic_config:
-            display_config[KILL_LAUNCHER_AFTER_START] = self.basic_config[KILL_LAUNCHER_AFTER_START]
-        return display_config
 
     def get_default(self, key):
-        if key == KILL_LAUNCHER_AFTER_START and self.basic_config is not None:
-            return self.basic_config.get_default(key)
         return self.default.get(key)
 
     def has_user_config(self):
@@ -347,9 +339,6 @@ class AppLauncherConfig(dict):
             self._update_launcher(auto_start=value)
         elif key == APP_LAUNCHER_UPDATE_METHOD and value in UPDATE_METHOD_LABELS:
             self._update_launcher(update_method=UPDATE_METHOD_LABELS[value])
-        elif key == KILL_LAUNCHER_AFTER_START and isinstance(value, bool) and self.basic_config is not None:
-            self.basic_config[key] = value
-            super().__setitem__(key, self.basic_config[key])
 
     def _update_launcher(self, **changes):
         try:
@@ -421,11 +410,5 @@ def register_app_launcher_options(global_config, pyappify_module):
     launcher_options = create_app_launcher_options(pyappify_module, basic_config)
     if launcher_options is None:
         return None
-    if basic_config is not None:
-        basic_option = global_config.config_options.get('Basic Options')
-        if basic_option is not None:
-            if basic_option.config_type is None:
-                basic_option.config_type = {}
-            basic_option.config_type[KILL_LAUNCHER_AFTER_START] = {'hidden': True}
     option, config = launcher_options
     return global_config.register_config(option, config)
