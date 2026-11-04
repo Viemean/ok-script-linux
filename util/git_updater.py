@@ -9,9 +9,34 @@ from ok.util.logger import Logger
 
 logger = Logger.get_logger(__name__)
 
-DEFAULT_UPSTREAM_URL = "https://github.com/Viemean/ok-wuthering-waves-linux.git"
-DEFAULT_BRANCH = "linux-support"
+DEFAULT_UPSTREAM_URL = "origin"
+DEFAULT_BRANCH = "master"
 FETCH_DEPTH = 5
+
+
+def get_default_upstream_url(repo_dir: Optional[str] = None) -> str:
+    """Dynamically resolves default upstream URL from git remotes or global config."""
+    root = get_git_root(repo_dir)
+    if root:
+        for remote in ["upstream", "origin"]:
+            try:
+                url = subprocess.check_output(
+                    ["git", "remote", "get-url", remote],
+                    cwd=root,
+                    text=True,
+                    stderr=subprocess.DEVNULL,
+                ).strip()
+                if url:
+                    return url
+            except Exception:
+                pass
+    try:
+        from ok import og
+        if og and og.config:
+            return og.config.get("git_update", {}).get("upstream_url", "")
+    except Exception:
+        pass
+    return ""
 
 
 def get_git_root(cwd: Optional[str] = None) -> Optional[str]:
@@ -126,7 +151,7 @@ def get_current_branch(repo_dir: Optional[str] = None) -> str:
 
 def check_git_updates(
     repo_dir: Optional[str] = None,
-    upstream_url: str = DEFAULT_UPSTREAM_URL,
+    upstream_url: Optional[str] = None,
     branch: Optional[str] = None,
     depth: int = FETCH_DEPTH,
 ) -> Tuple[bool, List[str], str]:
@@ -141,9 +166,12 @@ def check_git_updates(
 
     target_branch = branch or get_current_branch(root)
     local_commit = get_current_commit(root)
+    effective_url = upstream_url or DEFAULT_UPSTREAM_URL or get_default_upstream_url(root)
+    if not effective_url:
+        return False, [], "No remote upstream URL configured"
 
     try:
-        fetch_cmd = build_fetch_command(upstream_url, target_branch, depth, root)
+        fetch_cmd = build_fetch_command(effective_url, target_branch, depth, root)
         subprocess.check_call(
             fetch_cmd,
             cwd=root,
@@ -231,7 +259,7 @@ def get_local_commits(repo_dir: Optional[str] = None, count: int = FETCH_DEPTH) 
 
 def pull_git_updates(
     repo_dir: Optional[str] = None,
-    upstream_url: str = DEFAULT_UPSTREAM_URL,
+    upstream_url: Optional[str] = None,
     branch: Optional[str] = None,
     depth: int = FETCH_DEPTH,
     target_commit: Optional[str] = None,
@@ -242,6 +270,10 @@ def pull_git_updates(
         return False, "Not a valid git repository"
 
     target_branch = branch or get_current_branch(root)
+    effective_url = upstream_url or DEFAULT_UPSTREAM_URL or get_default_upstream_url(root)
+    if not effective_url and not target_commit:
+        return False, "No remote upstream URL configured"
+
     if "PYTEST_CURRENT_TEST" in os.environ or "pytest" in sys.modules:
         if not os.environ.get("OK_ALLOW_TEST_GIT_RESET"):
             logger.warning("Blocked physical git fetch/reset in test environment")
@@ -254,21 +286,31 @@ def pull_git_updates(
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            return True, "Success"
+        else:
+            fetch_cmd = build_fetch_command(effective_url, target_branch, depth, root)
+            subprocess.check_call(
+                fetch_cmd,
+                cwd=root,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            subprocess.check_call(
+                ["git", "reset", "--hard", "FETCH_HEAD"],
+                cwd=root,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
 
-        fetch_cmd = build_fetch_command(upstream_url, target_branch, depth, root)
-        subprocess.check_call(
-            fetch_cmd,
-            cwd=root,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        subprocess.check_call(
-            ["git", "reset", "--hard", "FETCH_HEAD"],
-            cwd=root,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        try:
+            subprocess.check_call(
+                ["git", "submodule", "update", "--init", "--recursive"],
+                cwd=root,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except Exception as se:
+            logger.warning(f"git submodule update warning: {se}")
+
         return True, "Success"
     except Exception as e:
         logger.error(f"Failed to pull git updates: {e}")
