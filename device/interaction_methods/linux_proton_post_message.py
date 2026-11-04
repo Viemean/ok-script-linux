@@ -25,36 +25,85 @@ WM_RBUTTONUP = 0x0205
 WM_MBUTTONDOWN = 0x0207
 WM_MBUTTONUP = 0x0208
 WM_MOUSEWHEEL = 0x020A
+WM_XBUTTONDOWN = 0x020B
+WM_XBUTTONUP = 0x020C
 
 MK_LBUTTON = 0x0001
 MK_RBUTTON = 0x0002
 MK_MBUTTON = 0x0010
+MK_XBUTTON1 = 0x0020
+MK_XBUTTON2 = 0x0040
+XBUTTON1 = 0x0001
+XBUTTON2 = 0x0002
 WHEEL_DELTA = 120
 
-# Standard scan code mapping for typical US keyboard
+# Standard scan code mapping for typical US 104 keyboard
 SCAN_CODE_MAP = {
+    # Numbers 0 - 9
     0x30: 0x0B, 0x31: 0x02, 0x32: 0x03, 0x33: 0x04, 0x34: 0x05,
     0x35: 0x06, 0x36: 0x07, 0x37: 0x08, 0x38: 0x09, 0x39: 0x0A,
+    # Letters A - Z
     0x41: 0x1E, 0x42: 0x30, 0x43: 0x2E, 0x44: 0x20, 0x45: 0x12,
     0x46: 0x21, 0x47: 0x22, 0x48: 0x23, 0x49: 0x17, 0x4A: 0x24,
     0x4B: 0x25, 0x4C: 0x26, 0x4D: 0x32, 0x4E: 0x31, 0x4F: 0x18,
     0x50: 0x19, 0x51: 0x10, 0x52: 0x13, 0x53: 0x1F, 0x54: 0x14,
     0x55: 0x16, 0x56: 0x2F, 0x57: 0x11, 0x58: 0x2D, 0x59: 0x15,
-    0x5A: 0x2C, 0x20: 0x39, 0x1B: 0x01, 0x0D: 0x1C, 0x09: 0x0F,
-    0x10: 0x2A, 0x11: 0x1D, 0x12: 0x38,
+    0x5A: 0x2C,
+    # Common Controls
+    0x08: 0x0E,  # BACKSPACE
+    0x09: 0x0F,  # TAB
+    0x0D: 0x1C,  # ENTER
+    0x14: 0x3A,  # CAPSLOCK
+    0x1B: 0x01,  # ESCAPE
+    0x20: 0x39,  # SPACE
+    # Modifiers (General + Left/Right explicit)
+    0x10: 0x2A, 0xA0: 0x2A, 0xA1: 0x36,  # SHIFT, LSHIFT, RSHIFT
+    0x11: 0x1D, 0xA2: 0x1D, 0xA3: 0x1D,  # CTRL, LCTRL, RCTRL (extended)
+    0x12: 0x38, 0xA4: 0x38, 0xA5: 0x38,  # ALT, LALT, RALT (extended)
+    0x5B: 0x5B, 0x5C: 0x5C,              # LWIN, RWIN
     # Function keys F1 - F12
     0x70: 0x3B, 0x71: 0x3C, 0x72: 0x3D, 0x73: 0x3E,
     0x74: 0x3F, 0x75: 0x40, 0x76: 0x41, 0x77: 0x42,
     0x78: 0x43, 0x79: 0x44, 0x7A: 0x57, 0x7B: 0x58,
-    # Navigation and editing keys
-    0x08: 0x0E, 0x25: 0x4B, 0x26: 0x48, 0x27: 0x4D, 0x28: 0x50,
-    0x21: 0x49, 0x22: 0x51, 0x23: 0x4F, 0x24: 0x47, 0x2D: 0x52, 0x2E: 0x53,
+    # Navigation & Editing keys (Extended)
+    0x21: 0x49, 0x22: 0x51, 0x23: 0x4F, 0x24: 0x47,  # PAGE_UP, PAGE_DOWN, END, HOME
+    0x25: 0x4B, 0x26: 0x48, 0x27: 0x4D, 0x28: 0x50,  # LEFT, UP, RIGHT, DOWN
+    0x2C: 0x37, 0x2D: 0x52, 0x2E: 0x53,              # PRINTSCREEN, INSERT, DELETE
+    # OEM Symbol keys
+    0xBA: 0x27,  # ;:
+    0xBB: 0x0D,  # =+
+    0xBC: 0x33,  # ,<
+    0xBD: 0x0C,  # -_
+    0xBE: 0x34,  # .>
+    0xBF: 0x35,  # /?
+    0xC0: 0x29,  # `~
+    0xDB: 0x1A,  # [{
+    0xDC: 0x2B,  # \|
+    0xDD: 0x1B,  # ]}
+    0xDE: 0x28,  # '"
+    # Numpad keys
+    0x60: 0x52, 0x61: 0x4F, 0x62: 0x50, 0x63: 0x51, 0x64: 0x4B,
+    0x65: 0x4C, 0x66: 0x4D, 0x67: 0x47, 0x68: 0x48, 0x69: 0x49,
+    0x6A: 0x37,  # NUMPAD *
+    0x6B: 0x4E,  # NUMPAD +
+    0x6D: 0x4A,  # NUMPAD -
+    0x6E: 0x53,  # NUMPAD .
+    0x6F: 0x35,  # NUMPAD / (extended)
+    0x90: 0x45,  # NUMLOCK
+    0x91: 0x46,  # SCROLLLOCK
+}
+
+EXTENDED_KEYS = {
+    0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x2D, 0x2E,
+    0x5B, 0x5C, 0x6F, 0xA3, 0xA5
 }
 
 
 def make_lparam(vk_code: int, is_up: bool = False) -> int:
     scan = SCAN_CODE_MAP.get(vk_code, 0)
     lparam = (scan << 16) | 1
+    if vk_code in EXTENDED_KEYS:
+        lparam |= (1 << 24)
     if is_up:
         lparam |= (1 << 30) | (1 << 31)
     return lparam
@@ -148,21 +197,32 @@ class LinuxProtonPostMessageInteraction(BaseInteraction):
         logger.debug(f"ProtonPostMessage click {key} at ({target_x}, {target_y}) down_time={effective_down_time:.2f}s name={name}")
         lparam = make_mouse_lparam(target_x, target_y)
 
-        if key == "left":
-            down_msg, up_msg, btn_flag = WM_LBUTTONDOWN, WM_LBUTTONUP, MK_LBUTTON
-        elif key == "right":
-            down_msg, up_msg, btn_flag = WM_RBUTTONDOWN, WM_RBUTTONUP, MK_RBUTTON
+        k = str(key).lower()
+        if k in ("left", "l"):
+            down_msg, up_msg, down_wparam, up_wparam = WM_LBUTTONDOWN, WM_LBUTTONUP, MK_LBUTTON, 0
+        elif k in ("right", "r"):
+            down_msg, up_msg, down_wparam, up_wparam = WM_RBUTTONDOWN, WM_RBUTTONUP, MK_RBUTTON, 0
+        elif k in ("middle", "m"):
+            down_msg, up_msg, down_wparam, up_wparam = WM_MBUTTONDOWN, WM_MBUTTONUP, MK_MBUTTON, 0
+        elif k in ("x1", "mouse4", "side1"):
+            down_msg, up_msg = WM_XBUTTONDOWN, WM_XBUTTONUP
+            down_wparam = (XBUTTON1 << 16) | MK_XBUTTON1
+            up_wparam = (XBUTTON1 << 16)
+        elif k in ("x2", "mouse5", "side2"):
+            down_msg, up_msg = WM_XBUTTONDOWN, WM_XBUTTONUP
+            down_wparam = (XBUTTON2 << 16) | MK_XBUTTON2
+            up_wparam = (XBUTTON2 << 16)
         else:
-            down_msg, up_msg, btn_flag = WM_MBUTTONDOWN, WM_MBUTTONUP, MK_MBUTTON
+            down_msg, up_msg, down_wparam, up_wparam = WM_LBUTTONDOWN, WM_LBUTTONUP, MK_LBUTTON, 0
 
         # Only send WM_MOUSEMOVE when explicit coordinates are passed
         if move and x >= 0 and y >= 0:
             self.post(WM_MOUSEMOVE, 0, lparam)
             time.sleep(0.01)
 
-        self.post(down_msg, btn_flag, lparam)
+        self.post(down_msg, down_wparam, lparam)
         time.sleep(effective_down_time)
-        self.post(up_msg, 0, lparam)
+        self.post(up_msg, up_wparam, lparam)
 
     def right_click(self, x: int = -1, y: int = -1, move_back: bool = False, name: Optional[str] = None):
         self.click(x, y, move_back=move_back, name=name, key="right")
@@ -172,23 +232,37 @@ class LinuxProtonPostMessageInteraction(BaseInteraction):
         target_x, target_y = self.get_target_mouse_pos(x, y)
         logger.debug(f"ProtonPostMessage mouse_down {key} at ({target_x}, {target_y}) name={name}")
         lparam = make_mouse_lparam(target_x, target_y)
-        if key == "left":
+        k = str(key).lower()
+        if k in ("left", "l"):
             self.post(WM_LBUTTONDOWN, MK_LBUTTON, lparam)
-        elif key == "right":
+        elif k in ("right", "r"):
             self.post(WM_RBUTTONDOWN, MK_RBUTTON, lparam)
-        else:
+        elif k in ("middle", "m"):
             self.post(WM_MBUTTONDOWN, MK_MBUTTON, lparam)
+        elif k in ("x1", "mouse4", "side1"):
+            self.post(WM_XBUTTONDOWN, (XBUTTON1 << 16) | MK_XBUTTON1, lparam)
+        elif k in ("x2", "mouse5", "side2"):
+            self.post(WM_XBUTTONDOWN, (XBUTTON2 << 16) | MK_XBUTTON2, lparam)
+        else:
+            self.post(WM_LBUTTONDOWN, MK_LBUTTON, lparam)
 
     def mouse_up(self, key: str = "left"):
         target_x, target_y = self.get_target_mouse_pos()
         logger.debug(f"ProtonPostMessage mouse_up {key} at ({target_x}, {target_y})")
         lparam = make_mouse_lparam(target_x, target_y)
-        if key == "left":
+        k = str(key).lower()
+        if k in ("left", "l"):
             self.post(WM_LBUTTONUP, 0, lparam)
-        elif key == "right":
+        elif k in ("right", "r"):
             self.post(WM_RBUTTONUP, 0, lparam)
-        else:
+        elif k in ("middle", "m"):
             self.post(WM_MBUTTONUP, 0, lparam)
+        elif k in ("x1", "mouse4", "side1"):
+            self.post(WM_XBUTTONUP, (XBUTTON1 << 16), lparam)
+        elif k in ("x2", "mouse5", "side2"):
+            self.post(WM_XBUTTONUP, (XBUTTON2 << 16), lparam)
+        else:
+            self.post(WM_LBUTTONUP, 0, lparam)
 
     def swipe(self, x1: int, y1: int, x2: int, y2: int, duration: float = 200, settle_time: float = 0):
         self.move(x1, y1)
