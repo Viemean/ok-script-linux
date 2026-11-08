@@ -70,7 +70,7 @@ class DebugTab(Tab):
         layout.addWidget(gen_tr_button)
 
         convert_tr_button = PushButton(self.tr("Convert i18n files"))
-        convert_tr_button.clicked.connect(convert_to_mo_files)
+        convert_tr_button.clicked.connect(self.convert_tr)
         layout.addWidget(convert_tr_button)
 
         call_task_widget = QWidget()
@@ -120,8 +120,19 @@ class DebugTab(Tab):
         self.update_result_text.connect(self.result_edit.setText)
 
     def gen_tr(self):
-        folder = og.app.gen_tr_po_files()
-        reveal_in_explorer(folder)
+        try:
+            folder = og.app.gen_tr_po_files()
+            reveal_in_explorer(folder)
+            alert_info(self.tr("Generated i18n files successfully"))
+        except Exception as e:
+            alert_error(str(e))
+
+    def convert_tr(self):
+        try:
+            convert_to_mo_files()
+            alert_info(self.tr("Converted i18n .mo files successfully"))
+        except Exception as e:
+            alert_error(str(e))
 
     def reload_tasks(self):
         try:

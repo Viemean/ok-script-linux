@@ -15,6 +15,23 @@ def open_explorer_folder(folder):
     folder_path = Path(folder).resolve()
     folder_path.mkdir(parents=True, exist_ok=True)
     target = str(folder_path)
+
+    # 优先检测原生 Linux 桌面文件管理器，防止 xdg-open 被 nwjs/chrome 劫持 inode/directory
+    file_managers = [
+        ("dolphin", ["dolphin", target]),
+        ("nautilus", ["nautilus", target]),
+        ("nemo", ["nemo", target]),
+        ("thunar", ["thunar", target]),
+    ]
+    for name, cmd in file_managers:
+        if shutil.which(name):
+            try:
+                subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                logger.info(f"Opened folder using {name}: {target}")
+                return True
+            except Exception as e:
+                logger.warning(f"{name} failed: {e}")
+
     if shutil.which("xdg-open"):
         try:
             subprocess.Popen(["xdg-open", target], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -26,6 +43,8 @@ def open_explorer_folder(folder):
 
 
 def reveal_in_explorer(path):
-    """Open parent directory of path using system file manager."""
+    """Open directory or select item using system file manager."""
     item_path = Path(path).resolve()
+    if item_path.is_dir():
+        return open_explorer_folder(item_path)
     return open_explorer_folder(item_path.parent)

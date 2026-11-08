@@ -172,11 +172,16 @@ def check_git_updates(
 
     try:
         fetch_cmd = build_fetch_command(effective_url, target_branch, depth, root)
+        fetch_env = os.environ.copy()
+        fetch_env["GIT_TERMINAL_PROMPT"] = "0"
+        fetch_env["GIT_SSH_COMMAND"] = "ssh -o BatchMode=yes"
         subprocess.check_call(
             fetch_cmd,
             cwd=root,
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            env=fetch_env,
         )
     except Exception as e:
         logger.error(f"git fetch failed: {e}")

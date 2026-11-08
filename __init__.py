@@ -387,9 +387,25 @@ class App(_OverlayConfigMixin):
     def gen_tr_po_files(self):
         folder = ""
         from ok.ui.qt.common.config import Language
-        for locale in Language:
+        from ok.util.file import get_path_relative_to_exe
+
+        configured_langs = self.config.get("supported_languages") if self.config else None
+        if configured_langs:
+            target_locales = [lang for lang in configured_langs if lang]
+        else:
+            i18n_root = get_path_relative_to_exe("i18n")
+            if os.path.exists(i18n_root):
+                existing = [d for d in os.listdir(i18n_root) if os.path.isdir(os.path.join(i18n_root, d))]
+            else:
+                existing = []
+            if existing:
+                target_locales = existing
+            else:
+                target_locales = [locale.value.name() for locale in Language if locale != Language.AUTO]
+
+        for locale_name in target_locales:
             from ok.core.translation import update_po_file
-            folder = update_po_file(self.to_translate, locale.value.name())
+            folder = update_po_file(self.to_translate, locale_name)
         return folder
 
     def show_message_window(self, title, message):
