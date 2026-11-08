@@ -3493,32 +3493,32 @@
             <translation>游戏程序路径:</translation>
         </message>
         <message>
-            <source>Path to Client-Win64-Shipping.exe</source>
-            <translation>Client-Win64-Shipping.exe 绝对路径</translation>
+            <source>Absolute path to {exe}</source>
+            <translation>{exe} 绝对路径</translation>
         </message>
         <message>
             <source>Proton/Wine Prefix Directory:</source>
             <translation>Proton/Wine 容器目录:</translation>
         </message>
         <message>
-            <source>例如 ~/Games/Pronton</source>
-            <translation>例如 ~/Games/Pronton</translation>
+            <source>e.g. ~/.steam/steam/steamapps/compatdata/&lt;AppID&gt;/pfx or ~/Games/prefix</source>
+            <translation>例如 ~/.steam/steam/steamapps/compatdata/&lt;AppID&gt;/pfx 或 ~/Games/prefix</translation>
         </message>
         <message>
             <source>Launch Arguments:</source>
             <translation>启动参数:</translation>
         </message>
         <message>
-            <source>例如 Client -dx12 -krqlv=hd</source>
-            <translation>例如 Client -dx12 -krqlv=hd</translation>
+            <source>e.g. -dx11, -dx12, -screen-fullscreen 0</source>
+            <translation>例如 -dx11, -dx12, -screen-fullscreen 0</translation>
         </message>
         <message>
             <source>Command Wrapper (Optional):</source>
             <translation>命令包装前缀 (可选):</translation>
         </message>
         <message>
-            <source>例如 dlssg mangohud umu-run</source>
-            <translation>例如 dlssg mangohud umu-run</translation>
+            <source>e.g. gamemoderun mangohud umu-run</source>
+            <translation>例如 gamemoderun mangohud umu-run</translation>
         </message>
         <message>
             <source>Custom Environment Variables (KEY=VALUE):</source>

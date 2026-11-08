@@ -6,17 +6,43 @@
 
 ## 移植全流程速览
 
-整个移植过程分为七个阶段，按顺序执行：
+整个移植过程分为八个阶段，按顺序执行：
 
 ```mermaid
 flowchart TD
-    S1["1. 仓库清理与子模块挂载"] --> S2["2. 依赖重构 (pyproject.toml)"]
+    S0["0. UI 架构甄别与版本对齐 (防 3.x 新 UI 陷阱)"] --> S1["1. 仓库清理与子模块挂载"]
+    S1 --> S2["2. 依赖重构 (pyproject.toml)"]
     S2 --> S3["3. 环境重置 (uv sync & uv pip install -e ok)"]
     S3 --> S4["4. 业务配置注入 (src/config.py)"]
     S4 --> S5["5. 平台代码守卫 (扫描并隔离 win32 调用)"]
     S5 --> S6["6. 入口与引导配置 (Shebang & AGENTS.md)"]
     S6 --> S7["7. 物理运行验证 (./main_debug.py)"]
 ```
+
+---
+
+## 第零阶段：UI 架构甄别与版本对齐（关键守卫）
+
+在开始移植前，必须首先检查目标项目的底层与 UI 体系是否与 `ok-script-linux` 保持同构。
+
+### 1. 甄别是否已升级至新 UI（3.x 架构）
+
+检查目标项目源码或依赖配置（`pyproject.toml` / `requirements.txt` / `src/`）：
+- 依赖声明了 `ok-script>=3.0` 或 `ok-pyside-minimal`；
+- 源码或自定义 Tab 中出现了 `from ok.ui.qt.kit...`（如 `Button`, `Label`, `Icon`）或 `ok.ui.qt.tasks.config_editors`；
+- 移除了 Web 端并引入了 3.x 抽象层。
+
+### 2. 遇新 UI 的分流回退铁律
+
+`ok-script-linux` 的成熟稳定基座构建于 **`ok-script 2.x`**（直接基于原生 `PyQt-Fluent-Widgets`：`FluentIcon`、`PushButton`、`BodyLabel` 等）。
+
+若目标项目已升级到 3.x 新 UI：
+1. **绝对禁止直接在新 UI 上强行拼凑兼容补丁**：这会导致自定义 Tab、示例代码与真实框架抽象长期割裂；
+2. **寻找最后一个旧 UI 版本**：通过 `git log --oneline` 检索升级记录或 Release Tag，定位到项目切换至 3.0 / 新 UI 前的最后一个 2.x 稳定提交（例如 `v1.1.2`）；
+3. **回退并在旧 UI 基线上完成移植**：使用 `git reset --hard <last_2x_commit>` 回退到该提交，严格按照本指南完成 Linux 底层接入与最小物理验证；
+4. **功能向后移植**：在 2.x 纯 Linux 模板稳定跑通后，若业务确需新版本的个别特定功能，再针对性执行增量向后移植（Backport / Cherry-pick）。
+
+---
 
 ---
 

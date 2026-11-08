@@ -3485,32 +3485,32 @@
             <translation>Game Executable Path:</translation>
         </message>
         <message>
-            <source>Path to Client-Win64-Shipping.exe</source>
-            <translation>Path to Client-Win64-Shipping.exe</translation>
+            <source>Absolute path to {exe}</source>
+            <translation>Absolute path to {exe}</translation>
         </message>
         <message>
             <source>Proton/Wine Prefix Directory:</source>
             <translation>Proton/Wine Prefix Directory:</translation>
         </message>
         <message>
-            <source>e.g. ~/Games/Pronton</source>
-            <translation>e.g. ~/Games/Pronton</translation>
+            <source>e.g. ~/.steam/steam/steamapps/compatdata/&lt;AppID&gt;/pfx or ~/Games/prefix</source>
+            <translation>e.g. ~/.steam/steam/steamapps/compatdata/&lt;AppID&gt;/pfx or ~/Games/prefix</translation>
         </message>
         <message>
             <source>Launch Arguments:</source>
             <translation>Launch Arguments:</translation>
         </message>
         <message>
-            <source>e.g. Client -dx12 -krqlv=hd</source>
-            <translation>e.g. Client -dx12 -krqlv=hd</translation>
+            <source>e.g. -dx11, -dx12, -screen-fullscreen 0</source>
+            <translation>e.g. -dx11, -dx12, -screen-fullscreen 0</translation>
         </message>
         <message>
             <source>Command Wrapper (Optional):</source>
             <translation>Command Wrapper (Optional):</translation>
         </message>
         <message>
-            <source>e.g. dlssg mangohud umu-run</source>
-            <translation>e.g. dlssg mangohud umu-run</translation>
+            <source>e.g. gamemoderun mangohud umu-run</source>
+            <translation>e.g. gamemoderun mangohud umu-run</translation>
         </message>
         <message>
             <source>Custom Environment Variables (KEY=VALUE):</source>

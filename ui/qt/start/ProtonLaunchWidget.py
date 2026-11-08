@@ -70,7 +70,18 @@ class ProtonLaunchWidget(QFrame):
         exe_row = QHBoxLayout()
         exe_row.setSpacing(4)
         self.exe_edit = LineEdit(self.content_widget)
-        self.exe_edit.setPlaceholderText(self.tr("Path to Client-Win64-Shipping.exe"))
+        target_exe_hint = "game.exe"
+        try:
+            from ok import og
+            win_cfg = getattr(og, "config", {}).get("windows", {}) or {}
+            cfg_exe = win_cfg.get("exe")
+            if isinstance(cfg_exe, list) and cfg_exe:
+                target_exe_hint = cfg_exe[0]
+            elif isinstance(cfg_exe, str) and cfg_exe:
+                target_exe_hint = cfg_exe
+        except Exception:
+            pass
+        self.exe_edit.setPlaceholderText(self.tr("Absolute path to {exe}").format(exe=target_exe_hint))
         self.exe_browse_btn = TransparentToolButton(FluentIcon.FOLDER, self.content_widget)
         self.exe_browse_btn.clicked.connect(self._browse_exe)
         exe_row.addWidget(self.exe_edit)
@@ -82,7 +93,7 @@ class ProtonLaunchWidget(QFrame):
         prefix_row = QHBoxLayout()
         prefix_row.setSpacing(4)
         self.prefix_edit = LineEdit(self.content_widget)
-        self.prefix_edit.setPlaceholderText(self.tr("e.g. ~/Games/Pronton"))
+        self.prefix_edit.setPlaceholderText(self.tr("e.g. ~/.steam/steam/steamapps/compatdata/<AppID>/pfx or ~/Games/prefix"))
         self.prefix_browse_btn = TransparentToolButton(FluentIcon.FOLDER, self.content_widget)
         self.prefix_browse_btn.clicked.connect(self._browse_prefix)
         prefix_row.addWidget(self.prefix_edit)
@@ -92,13 +103,13 @@ class ProtonLaunchWidget(QFrame):
         # Launch Arguments
         self.content_layout.addWidget(CaptionLabel(self.tr("Launch Arguments:")))
         self.args_edit = LineEdit(self.content_widget)
-        self.args_edit.setPlaceholderText(self.tr("e.g. Client -dx12 -krqlv=hd"))
+        self.args_edit.setPlaceholderText(self.tr("e.g. -dx11, -dx12, -screen-fullscreen 0"))
         self.content_layout.addWidget(self.args_edit)
 
         # Command Wrapper
         self.content_layout.addWidget(CaptionLabel(self.tr("Command Wrapper (Optional):")))
         self.wrapper_edit = LineEdit(self.content_widget)
-        self.wrapper_edit.setPlaceholderText(self.tr("e.g. dlssg mangohud umu-run"))
+        self.wrapper_edit.setPlaceholderText(self.tr("e.g. gamemoderun mangohud umu-run"))
         self.content_layout.addWidget(self.wrapper_edit)
 
         # Custom Environment Variables (Flexible vertical height)
@@ -106,7 +117,7 @@ class ProtonLaunchWidget(QFrame):
         self.env_edit = TextEdit(self.content_widget)
         self.env_edit.setMinimumHeight(110)
         self.env_edit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.env_edit.setPlaceholderText("ANTI_DITHER_ENABLED=1\nDXVK_FRAME_RATE=90\nVKD3D_CONFIG=no_upload_hvv")
+        self.env_edit.setPlaceholderText("DXVK_FRAME_RATE=90\nMANGOHUD=1\nPROTON_ENABLE_NVAPI=1")
         self.content_layout.addWidget(self.env_edit, 1)
 
         self.main_layout.addWidget(self.content_widget, 1)
