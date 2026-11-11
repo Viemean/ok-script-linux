@@ -2,6 +2,11 @@ class TaskDisabledException(Exception):
     pass
 
 
+class TaskPausedException(Exception):
+    """Raised when a task is interrupted because the executor was paused."""
+    pass
+
+
 class CannotFindException(Exception):
     pass
 

@@ -6,7 +6,7 @@ from concurrent.futures import Future
 
 from ok.core.events import communicate
 from ok.core.notifications import alert_info
-from ok.task.exceptions import FinishedException, TaskDisabledException, WaitFailedException, CaptureException, \
+from ok.task.exceptions import FinishedException, TaskDisabledException, TaskPausedException, WaitFailedException, CaptureException, \
     HotkeyConfigException, ExecutorBusyException
 from ok.util.GlobalConfig import basic_options
 from ok.util.logger import Logger, config_logger
@@ -415,8 +415,13 @@ class TaskExecutor:
         return not (job is not None and job.ignore_pause and self.is_executor_thread())
 
     def check_enabled(self, check_pause=True):
-        if check_pause and self.blocked_by_pause():
-            self.sleep(1)
+        if self.blocked_by_pause():
+            task = self.current_task
+            if task is not None and getattr(task, 'reset_on_pause', False):
+                logger.info(f'{task} aborted by executor pause (reset_on_pause=True)')
+                raise TaskPausedException(f"{task} aborted due to executor pause")
+            if check_pause:
+                self.sleep(1)
         if not self.is_executor_thread():
             if self.current_task and not self.current_task._enabled:
                 logger.info(f'{self.current_task} is disabled, raise Exception')
@@ -477,6 +482,11 @@ class TaskExecutor:
             if self.exit_event.is_set():
                 logger.info("sleep Exit event set. Exiting early.")
                 sys.exit(0)
+            if self.blocked_by_pause():
+                task = self.current_task
+                if task is not None and getattr(task, 'reset_on_pause', False):
+                    logger.info(f'{task} aborted in sleep by executor pause')
+                    raise TaskPausedException(f"{task} aborted due to executor pause")
             if not (self.blocked_by_pause() or (
                     self.current_task is not None and self.current_task.paused) or self.interaction is None or not self.interaction.should_capture()):
                 to_sleep = self.pause_end_time - time.time()
@@ -869,6 +879,9 @@ class TaskExecutor:
                 self._finish_task(task, is_trigger_task)
                 communicate.notification.emit('Stopped', task.name, False,
                                               False, None, None, None)
+            except TaskPausedException:
+                logger.info(f"TaskPausedException, reset and pause task {task}")
+                self._finish_task(task, is_trigger_task)
             except FinishedException:
                 logger.info(f"FinishedException, breaking")
                 break

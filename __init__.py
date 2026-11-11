@@ -65,6 +65,7 @@ if TYPE_CHECKING:
         CaptureException,
         FinishedException,
         TaskDisabledException,
+        TaskPausedException,
         WaitFailedException,
     )
     from ok.task.task import BaseTask, FindFeature, OCR, TriggerTask
@@ -151,6 +152,7 @@ _LAZY_IMPORTS = {
     'sort_boxes': ('ok.feature.Box', 'sort_boxes'),
     'CannotFindException': ('ok.task.exceptions', 'CannotFindException'),
     'TaskDisabledException': ('ok.task.exceptions', 'TaskDisabledException'),
+    'TaskPausedException': ('ok.task.exceptions', 'TaskPausedException'),
     'FinishedException': ('ok.task.exceptions', 'FinishedException'),
     'WaitFailedException': ('ok.task.exceptions', 'WaitFailedException'),
     'CaptureException': ('ok.task.exceptions', 'CaptureException'),
