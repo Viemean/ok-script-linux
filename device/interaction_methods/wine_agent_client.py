@@ -14,6 +14,7 @@ logger = Logger.get_logger(__name__)
 
 AGENT_MAGIC = 0x4F4B5757  # "OKWW"
 DEFAULT_PORT = 49152
+DEFAULT_AGENT_EXE = "agent-post.exe"
 
 CMD_POST_MSG = 1
 CMD_PING = 2
@@ -47,6 +48,7 @@ class WineAgentClient:
 
     def _kill_existing_agent(self):
         try:
+            subprocess.run(["pkill", "-f", DEFAULT_AGENT_EXE.replace(".exe", "")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             subprocess.run(["pkill", "-f", "ok-wine-agent"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             time.sleep(0.1)
         except Exception:
@@ -133,9 +135,12 @@ class WineAgentClient:
             logger.warning("Could not detect Proton/Wine environment from running game process")
             return False
 
-        agent_exe = Path(__file__).parent / "bin" / "ok-wine-agent.exe"
+        bin_dir = Path(__file__).parent / "bin"
+        agent_exe = bin_dir / DEFAULT_AGENT_EXE
         if not agent_exe.exists():
-            logger.error(f"ok-wine-agent.exe not found at {agent_exe}")
+            agent_exe = bin_dir / "ok-wine-agent.exe"
+        if not agent_exe.exists():
+            logger.error(f"Agent executable not found at {bin_dir / DEFAULT_AGENT_EXE}")
             return False
 
         target_class = ""

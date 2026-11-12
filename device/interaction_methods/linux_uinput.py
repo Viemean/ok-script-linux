@@ -43,9 +43,12 @@ class LinuxUinputInteraction(BaseInteraction):
         'middle': ecodes.BTN_MIDDLE,
     }
 
-    def __init__(self, capture, hwnd_window=None):
+    DEFAULT_DEVICE_NAME = "Logitech USB Keyboard"
+
+    def __init__(self, capture, hwnd_window=None, device_name=DEFAULT_DEVICE_NAME):
         super().__init__(capture)
         self.hwnd_window = hwnd_window
+        self.device_name = device_name
         self.mouse = MouseController()
         self._uinput = None
         self._init_uinput()
@@ -56,8 +59,8 @@ class LinuxUinputInteraction(BaseInteraction):
                 ecodes.EV_KEY: list(self.KEY_MAP.values()) + list(self.BTN_MAP.values()),
                 ecodes.EV_REL: [ecodes.REL_X, ecodes.REL_Y, ecodes.REL_WHEEL],
             }
-            self._uinput = evdev.UInput(capabilities, name="ok-ww-uinput")
-            logger.info("LinuxUinputInteraction device initialized successfully")
+            self._uinput = evdev.UInput(capabilities, name=self.device_name)
+            logger.info(f"LinuxUinputInteraction device initialized successfully ({self.device_name})")
         except Exception as e:
             logger.error(f"Failed to open /dev/uinput: {e}")
 
