@@ -124,6 +124,7 @@ _LAZY_IMPORTS = {
     'LinuxProtonPostMessageInteraction': ('ok.device.interaction', 'LinuxProtonPostMessageInteraction'),
     'PostMessageInteraction': ('ok.device.interaction', 'PostMessageInteraction'),
     'LinuxUinputInteraction': ('ok.device.interaction', 'LinuxUinputInteraction'),
+    'LinuxGamescopeEIInteraction': ('ok.device.interaction', 'LinuxGamescopeEIInteraction'),
     'PynputInteraction': ('ok.device.interaction', 'PynputInteraction'),
     'ImageCaptureMethod': ('ok.device.capture', 'ImageCaptureMethod'),
     'BaseCaptureMethod': ('ok.device.capture', 'BaseCaptureMethod'),
