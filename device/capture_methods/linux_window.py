@@ -1,3 +1,5 @@
+import glob
+import os
 import re
 import threading
 import time
@@ -51,6 +53,7 @@ class LinuxWindow:
         self.window_obj = None
         self.display = None
         self.root = None
+        self.current_display_name = None
 
         self.exists = False
         self.visible = False
@@ -117,15 +120,58 @@ class LinuxWindow:
             logger.debug(f"Failed to check Exit App when Game Exits: {e}")
         return False
 
-    def _init_display(self):
+    def _get_candidate_displays(self):
+        displays = []
+        default_disp = os.environ.get("DISPLAY")
+        if default_disp:
+            displays.append(default_disp)
+        elif ":0" not in displays:
+            displays.append(":0")
+
+        # Discover Gamescope / Xwayland displays
+        proc_displays = set()
+        try:
+            for p in glob.glob('/proc/[0-9]*/cmdline'):
+                try:
+                    with open(p, 'rb') as f:
+                        cmd = f.read().replace(b'\0', b' ').decode('utf-8', errors='ignore')
+                        if 'Xwayland' in cmd:
+                            m = re.search(r'Xwayland\s+(:[0-9]+)', cmd)
+                            if m:
+                                proc_displays.add(m.group(1))
+                except Exception:
+                    continue
+            for s in glob.glob('/tmp/.X11-unix/X*'):
+                num = os.path.basename(s)[1:]
+                if num.isdigit():
+                    proc_displays.add(f":{num}")
+        except Exception:
+            pass
+
+        for d in sorted(proc_displays, reverse=True):
+            if d not in displays:
+                displays.append(d)
+        return displays
+
+    def _init_display(self, display_name=None):
         try:
             import Xlib.display
-            if self.display is None:
-                self.display = Xlib.display.Display()
+            target_disp = display_name if display_name is not None else os.environ.get("DISPLAY")
+            if self.display is None or self.current_display_name != target_disp:
+                if self.display is not None:
+                    try:
+                        self.display.close()
+                    except Exception:
+                        pass
+                self.display = Xlib.display.Display(target_disp)
                 self.root = self.display.screen().root
+                self.current_display_name = target_disp
             return True
         except Exception as e:
-            logger.debug(f"Failed to initialize X11/XWayland display: {e}")
+            logger.debug(f"Failed to initialize X11/XWayland display '{target_disp}': {e}")
+            self.display = None
+            self.root = None
+            self.current_display_name = None
             return False
 
     def _update_loop(self):
@@ -139,13 +185,21 @@ class LinuxWindow:
 
     def _get_window_name(self, win):
         try:
-            name = win.get_wm_name()
-            if name:
-                return name if isinstance(name, str) else name.decode("utf-8", errors="ignore")
             prop = win.get_full_property(self.display.intern_atom("_NET_WM_NAME"), 0)
             if prop and prop.value:
                 val = prop.value
-                return val if isinstance(val, str) else val.decode("utf-8", errors="ignore")
+                val_str = val if isinstance(val, str) else val.decode("utf-8", errors="ignore")
+                if val_str.strip():
+                    return val_str.strip()
+        except Exception:
+            pass
+
+        try:
+            name = win.get_wm_name()
+            if name:
+                name_str = name if isinstance(name, str) else name.decode("utf-8", errors="ignore")
+                if name_str.strip():
+                    return name_str.strip()
         except Exception:
             pass
         return ""
@@ -177,6 +231,11 @@ class LinuxWindow:
                 if self.title_pattern.search(name):
                     return True, name
             elif str(self.title_pattern).lower() in name.lower():
+                return True, name
+
+        # Special fallback for Gamescope steam_app_default
+        if "steam_app_default" in classes and name:
+            if not self.title_pattern or (str(self.title_pattern).lower() in name.lower()):
                 return True, name
 
         return False, name
@@ -248,16 +307,26 @@ class LinuxWindow:
     def _scan_window(self):
         if self.stop_event.is_set():
             return
-        if not self._init_display():
-            return
 
         try:
             target_win = None
-            if self.exists and self.window_obj and self.hwnd:
+            name = ""
+            geom = None
+            is_viewable = False
+
+            if self.exists and self.window_obj and self.hwnd and self.display is not None:
                 target_win, name, geom, is_viewable = self._verify_current_window()
 
             if target_win is None:
-                target_win, name, geom, is_viewable = self._find_target_window(self.root)
+                candidate_displays = self._get_candidate_displays()
+                for disp_name in candidate_displays:
+                    if not self._init_display(disp_name):
+                        continue
+                    target_win, name, geom, is_viewable = self._find_target_window(self.root)
+                    if target_win is not None:
+                        if disp_name and os.environ.get("DISPLAY") != disp_name:
+                            os.environ["DISPLAY"] = disp_name
+                        break
             if target_win is not None:
                 coords = target_win.translate_coords(self.root, 0, 0)
                 is_new_game = (not self.exists) or (self.hwnd != target_win.id)
