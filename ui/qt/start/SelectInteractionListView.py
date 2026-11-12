@@ -12,6 +12,8 @@ class SelectInteractionListView(ListWidget):
 
     INTERACTION_LABELS = {
         'ProtonPostMessage': 'ProtonPostMessage (支持后台)',
+        'libei': 'libei (Gamescope)',
+        'LinuxGamescopeEIInteraction': 'libei (Gamescope)',
         'UInput': 'UInput（仅前台）',
     }
 

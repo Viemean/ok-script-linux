@@ -14,6 +14,7 @@ from ok.device.capture import (
 from ok.device.interaction import (
     PynputInteraction, BrowserInteraction, ADBInteraction,
     LinuxProtonPostMessageInteraction, LinuxUinputInteraction,
+    LinuxGamescopeEIInteraction,
 )
 from ok.core.events import communicate
 from ok.util.collection import parse_ratio
@@ -33,6 +34,8 @@ LINUX_CAPTURE_PROVIDERS = {
 
 LINUX_INTERACTION_PROVIDERS = {
     'ProtonPostMessage': LinuxProtonPostMessageInteraction,
+    'libei': LinuxGamescopeEIInteraction,
+    'LinuxGamescopeEIInteraction': LinuxGamescopeEIInteraction,
     'UInput': LinuxUinputInteraction,
     'Pynput': PynputInteraction,
 }
@@ -86,7 +89,7 @@ class DeviceManager:
 
             # [LINUX-PORT-CRITICAL] Register Vulkan as default and X11_Direct as fallback on Linux
             self.window_capture_config['capture_method'] = list(LINUX_CAPTURE_PROVIDERS.keys())
-            self.window_capture_config['interaction'] = ['ProtonPostMessage', 'UInput']
+            self.window_capture_config['interaction'] = ['ProtonPostMessage', 'libei', 'UInput']
             saved_interaction = self.config.get('interaction')
             target_interaction_cls = LINUX_INTERACTION_PROVIDERS.get(saved_interaction, LinuxProtonPostMessageInteraction)
             self.window_interaction_class = target_interaction_cls
@@ -516,6 +519,12 @@ class DeviceManager:
         if self.config.get("interaction") != interaction_name:
             self.config['interaction'] = interaction_name
             target_cls = LINUX_INTERACTION_PROVIDERS.get(interaction_name) or LINUX_INTERACTION_PROVIDERS.get(interaction) or LinuxProtonPostMessageInteraction
+            if target_cls is not LinuxProtonPostMessageInteraction:
+                try:
+                    from ok.device.interaction_methods.wine_agent_client import WineAgentClient
+                    WineAgentClient().close()
+                except Exception as e:
+                    logger.debug(f"Failed to stop WineAgent on interaction switch: {e}")
             self.window_interaction_class = target_cls
             self.win_interaction_class = target_cls
             self.start()
@@ -570,6 +579,11 @@ class DeviceManager:
                              top_hwnd_class=self.windows_capture_config.get('top_hwnd_class'))
             self.use_windows_capture()
             if not isinstance(self.interaction, self.win_interaction_class):
+                if self.interaction is not None:
+                    try:
+                        self.interaction.close()
+                    except Exception as e:
+                        logger.error(f'old interaction close failed: {e}')
                 self.interaction = self.win_interaction_class(self.capture_method, self.hwnd_window)
             elif self.interaction:
                 self.interaction.capture = self.capture_method
