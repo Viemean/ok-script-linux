@@ -5,6 +5,8 @@ import os
 import mmap
 import threading
 import time
+import ctypes
+import subprocess
 import cv2
 import numpy as np
 
@@ -19,6 +21,54 @@ SOCK_PATH = "\0/com/obsproject/vkcapture"
 CLIENT_DATA_SIZE = 128
 CONTROL_DATA_SIZE = 32
 TEXTURE_DATA_SIZE = 128
+
+_c_convert_lib = None
+_c_convert_lib_initialized = False
+
+
+def _get_c_convert_lib():
+    global _c_convert_lib, _c_convert_lib_initialized
+    if _c_convert_lib_initialized:
+        return _c_convert_lib
+
+    _c_convert_lib_initialized = True
+    try:
+        cur_dir = os.path.dirname(os.path.abspath(__file__))
+        so_path = os.path.join(cur_dir, "bin", "ok-vk-convert.so")
+        c_path = os.path.join(cur_dir, "vulkan", "vk_color_convert.c")
+
+        if not os.path.exists(so_path) and os.path.exists(c_path):
+            os.makedirs(os.path.dirname(so_path), exist_ok=True)
+            res = subprocess.run(
+                ["gcc", "-O3", "-march=native", "-fPIC", "-shared", c_path, "-o", so_path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            if res.returncode != 0:
+                subprocess.run(
+                    ["gcc", "-O3", "-fPIC", "-shared", c_path, "-o", so_path],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+
+        if os.path.exists(so_path):
+            lib = ctypes.cdll.LoadLibrary(so_path)
+            lib.ab30_to_bgr24.restype = None
+            lib.ab30_to_bgr24.argtypes = [
+                ctypes.c_void_p,
+                ctypes.c_void_p,
+                ctypes.c_int,
+                ctypes.c_int,
+                ctypes.c_int,
+            ]
+            _c_convert_lib = lib
+            logger.info("Loaded optimized Vulkan color conversion library")
+    except Exception as e:
+        logger.warning(f"Failed to compile/load Vulkan color conversion library: {e}")
+        _c_convert_lib = None
+
+    return _c_convert_lib
 
 
 class LinuxVulkanCaptureMethod(BaseWindowCaptureMethod):
@@ -196,9 +246,31 @@ class LinuxVulkanCaptureMethod(BaseWindowCaptureMethod):
                 return None
 
             try:
-                # Direct zero-copy ndarray from shared memory
+                # 10-bit color formats: DRM_FORMAT_ABGR2101010 (0x30334241 / AB30) and XBGR2101010
+                if self._format in (0x30334241, 0x30334258, 808665665):
+                    stride_pixels = self._stride // 4
+                    c_lib = _get_c_convert_lib()
+                    if c_lib is not None:
+                        frame = np.empty((self._height, self._width, 3), dtype=np.uint8)
+                        src_arr = np.frombuffer(self._mmap_buf, dtype=np.uint32)
+                        c_lib.ab30_to_bgr24(
+                            src_arr.ctypes.data,
+                            frame.ctypes.data,
+                            self._width,
+                            self._height,
+                            stride_pixels,
+                        )
+                        return frame
+
+                    # Pure Python/NumPy fallback
+                    pixels = np.frombuffer(self._mmap_buf, dtype=np.uint32).reshape((self._height, stride_pixels))[:, :self._width]
+                    r = ((pixels & 0x3FF) >> 2).astype(np.uint8)
+                    g = (((pixels >> 10) & 0x3FF) >> 2).astype(np.uint8)
+                    b = (((pixels >> 20) & 0x3FF) >> 2).astype(np.uint8)
+                    return cv2.merge([b, g, r])
+
+                # Standard 8-bit format (BGRA / BGRx)
                 arr = np.frombuffer(self._mmap_buf, dtype=np.uint8).reshape((self._height, self._stride))
-                # Crop valid width and convert BGRA to BGR
                 valid_width_bytes = self._width * 4
                 img_bgra = arr[:, :valid_width_bytes].reshape((self._height, self._width, 4))
                 return cv2.cvtColor(img_bgra, cv2.COLOR_BGRA2BGR)
