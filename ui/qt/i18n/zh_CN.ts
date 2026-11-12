@@ -812,6 +812,10 @@
     <context>
         <name>StartController</name>
         <message>
+            <source>Game is not running or game process not detected, please start the game first!</source>
+            <translation>游戏未启动或未能检测到游戏进程，请先启动游戏！</translation>
+        </message>
+        <message>
             <source>Start game failed, please start game first</source>
             <translation>启动游戏失败, 请先手动启动游戏!</translation>
         </message>

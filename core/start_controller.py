@@ -182,66 +182,44 @@ class StartController:
             time.sleep(self.STARTED_WINDOW_POLL_INTERVAL)
         return False
 
-    def start_device(self, initial_refresh_done=False):
+    def _is_device_connected(self):
         device = og.device_manager.get_preferred_device()
-        logger.info(f'start_device: {device}')
-
-        if device and not device['connected']:
-            capture_method = getattr(og.device_manager, 'capture_method', None)
-            if capture_method and hasattr(capture_method, 'hwnd_window'):
-                hwnd_win = capture_method.hwnd_window
-                if hasattr(hwnd_win, '_scan_window'):
-                    try:
-                        hwnd_win._scan_window()
-                        device = og.device_manager.get_preferred_device()
-                    except Exception as e:
-                        logger.debug(f"Direct window probe before start_device failed: {e}")
-
-        if device and not device['connected']:
-            # LINUX_CUSTOM: Preserve Proton launcher support on Linux; do not overwrite during upstream framework sync
-            from ok.device.linux_proton_launcher import get_proton_launcher
-            proton_launcher = get_proton_launcher()
-            if proton_launcher.can_launch():
-                logger.info("Attempting to start game via Linux Proton launcher...")
-                success, err = proton_launcher.launch()
-                if not success:
-                    communicate.starting_emulator.emit(True, self.tr(f"Start game failed: {err}"), 0)
-                    return False
-                if not self._wait_until_started_window_stable():
-                    return False
-                if not self._wait_until_device_ready():
-                    return False
-                return True
-            # END_LINUX_CUSTOM
-            if device['device'] == "windows" and not is_admin():
-                communicate.starting_emulator.emit(True,
-                                                   self.tr("PC version requires admin privileges, Please restart this app with admin privileges!"),
-                                                   0)
-                communicate.restart_admin.emit()
-                return False
-            path = og.device_manager.get_exe_path(device)
-            if path:
-                logger.info(f"starting game {path}")
-                args = None
-                if device['device'] == "windows":
-                    launch_arguments = (self.config.get('windows') or {}).get('launch_arguments')
-                    if callable(launch_arguments):
-                        launch_arguments = launch_arguments()
-                    if launch_arguments:
-                        args = launch_arguments
-                if not execute(path, arguments=args, start_method=self.start_method):
-                    communicate.starting_emulator.emit(True, self.tr("Start game failed, please start game first"), 0)
-                    return False
-                if device['device'] == "windows" and not self._wait_until_started_window_stable():
-                    return False
-                if not self._wait_until_device_ready():
-                    return False
-            else:
-                communicate.starting_emulator.emit(True,
-                                                   self.tr('Game path does not exist, Please open game manually!'), 0)
-                return False
-        elif not self._wait_until_device_ready(refresh_first=not initial_refresh_done):
+        if not device or not device.get('connected'):
             return False
+        capture_method = getattr(og.device_manager, 'capture_method', None)
+        if capture_method is None or not capture_method.connected():
+            return False
+        return True
+
+    def start_device(self, initial_refresh_done=False):
+        if not self._is_device_connected():
+            logger.info("Game not connected, attempting to connect up to 3 times...")
+            for attempt in range(1, 4):
+                if self.exit_event.is_set():
+                    return False
+                logger.info(f"Connecting to game, attempt {attempt}/3")
+                try:
+                    og.device_manager.do_refresh(True)
+                except Exception as e:
+                    logger.debug(f"do_refresh attempt {attempt} error: {e}")
+                if self._is_device_connected():
+                    logger.info(f"Connected to game on attempt {attempt}")
+                    break
+                if attempt < 3:
+                    time.sleep(0.5)
+
+        if not self._is_device_connected():
+            error_msg = self.tr("Game is not running or game process not detected, please start the game first!")
+            logger.error(f"start_device failed: {error_msg}")
+            communicate.starting_emulator.emit(True, error_msg, 0)
+            return False
+
+        error = self.check_device_error()
+        if error:
+            logger.error(f"start_device check_device_error: {error}")
+            communicate.starting_emulator.emit(True, error, 0)
+            return False
+
         communicate.starting_emulator.emit(True, None, 0)
         return True
 

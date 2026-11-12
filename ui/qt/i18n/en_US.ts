@@ -804,6 +804,10 @@
     <context>
         <name>StartController</name>
         <message>
+            <source>Game is not running or game process not detected, please start the game first!</source>
+            <translation>Game is not running or game process not detected, please start the game first!</translation>
+        </message>
+        <message>
             <source>Start game failed, please start game first</source>
             <translation>Start game failed, please start game first</translation>
         </message>

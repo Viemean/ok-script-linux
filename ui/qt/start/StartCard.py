@@ -26,10 +26,6 @@ class StartCard(SettingCard):
         self.hBoxLayout.addWidget(self.status_bar, 0, Qt.AlignLeft)
         self.hBoxLayout.addSpacing(6)
 
-        self.get_launch_args_button = PushButton(FluentIcon.SEARCH, self.tr("Get Launch Args"), self)
-        self.hBoxLayout.addWidget(self.get_launch_args_button, 0, Qt.AlignRight)
-        self.hBoxLayout.addSpacing(6)
-
         self.capture_button = PushButton(FluentIcon.ZOOM, self.tr("Capture"), self)
         self.hBoxLayout.addWidget(self.capture_button, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(6)
@@ -85,13 +81,7 @@ class StartCard(SettingCard):
         suffix = f'({hotkey})' if hotkey and hotkey != 'None' else ''
 
         if og.executor.paused:
-            device = og.device_manager.get_preferred_device()
-            from ok.device.linux_proton_launcher import get_proton_launcher
-            has_launch = get_proton_launcher().can_launch()
-            if device and not device['connected'] and (device.get('full_path') or has_launch):
-                self.start_button.setText(self.tr("Start Game") + suffix)
-            else:
-                self.start_button.setText(self.tr("Start") + suffix)
+            self.start_button.setText(self.tr("Start") + suffix)
             self.start_button.setIcon(FluentIcon.PLAY)
             self.status_bar.hide()
         else:

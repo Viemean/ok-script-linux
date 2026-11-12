@@ -108,8 +108,7 @@ class DeviceManager:
         return linux_audio_controller
 
     def get_launcher(self):
-        from ok.device.linux_proton_launcher import get_proton_launcher
-        return get_proton_launcher()
+        return None
 
     def stop_hwnd(self):
         if self.hwnd_window:
