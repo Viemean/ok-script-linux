@@ -1,6 +1,7 @@
 import glob
 import os
 import re
+import socket
 import threading
 import time
 
@@ -120,6 +121,28 @@ class LinuxWindow:
             logger.debug(f"Failed to check Exit App when Game Exits: {e}")
         return False
 
+    @staticmethod
+    def _is_display_responsive(display_name, timeout=0.1):
+        if not display_name:
+            return False
+        try:
+            m = re.search(r':([0-9]+)', str(display_name))
+            if not m:
+                return False
+            disp_num = m.group(1)
+            sock_path = f"/tmp/.X11-unix/X{disp_num}"
+            if not os.path.exists(sock_path):
+                return False
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.settimeout(timeout)
+            try:
+                s.connect(sock_path)
+                return True
+            finally:
+                s.close()
+        except Exception:
+            return False
+
     def _get_candidate_displays(self):
         displays = []
         default_disp = os.environ.get("DISPLAY")
@@ -148,15 +171,21 @@ class LinuxWindow:
         except Exception:
             pass
 
+        result = []
+        for d in displays:
+            if d not in result and self._is_display_responsive(d):
+                result.append(d)
         for d in sorted(proc_displays, reverse=True):
-            if d not in displays:
-                displays.append(d)
-        return displays
+            if d not in result and self._is_display_responsive(d):
+                result.append(d)
+        return result
 
     def _init_display(self, display_name=None):
+        target_disp = display_name if display_name is not None else os.environ.get("DISPLAY")
+        if not target_disp or not self._is_display_responsive(target_disp):
+            return False
         try:
             import Xlib.display
-            target_disp = display_name if display_name is not None else os.environ.get("DISPLAY")
             if self.display is None or self.current_display_name != target_disp:
                 if self.display is not None:
                     try:
