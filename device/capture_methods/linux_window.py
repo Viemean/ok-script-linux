@@ -1,9 +1,13 @@
 import glob
 import os
 import re
+import shutil
 import socket
+import subprocess
+import tempfile
 import threading
 import time
+from typing import Optional
 
 from ok.core.events import communicate
 from ok.util.GlobalConfig import basic_options
@@ -11,6 +15,178 @@ from ok.util.logger import Logger
 from ok.device.audio_methods.linux_audio import get_mute_state, set_mute_state
 
 logger = Logger.get_logger(__name__)
+
+
+class GamescopeHostTracker:
+    """Tracks active window on the host compositor when the game runs inside Gamescope."""
+
+    def __init__(self):
+        self._active_class = None
+        self._kwin_script_name = None
+        self._kwin_script_file = None
+        self._is_kwin_active = False
+        self._receiver = None
+        self._init_kwin()
+
+    def _init_kwin(self):
+        try:
+            from PySide6.QtCore import QObject, Slot, QCoreApplication
+            from PySide6.QtDBus import QDBusConnection, QDBusInterface
+
+            bus = QDBusConnection.sessionBus()
+            if not bus.isConnected():
+                return
+            kwin_iface = QDBusInterface("org.kde.KWin", "/KWin", "org.kde.KWin", bus)
+            if not kwin_iface.isValid():
+                return
+
+            tracker = self
+
+            class _Receiver(QObject):
+                @Slot(str)
+                def update(self, cls):
+                    val = cls.lower() if cls else ""
+                    if tracker._active_class != val:
+                        logger.info(f"GamescopeHostTracker active window: '{cls}'")
+                    tracker._active_class = val
+
+            self._receiver = _Receiver()
+            app = QCoreApplication.instance()
+            if app is not None:
+                self._receiver.moveToThread(app.thread())
+
+            pid = os.getpid()
+            service_name = f"com.okscript.tracker_{pid}"
+            self._kwin_script_name = f"ok_tracker_{pid}"
+            self._kwin_script_file = os.path.join(tempfile.gettempdir(), f"{self._kwin_script_name}.js")
+
+            bus.registerService(service_name)
+            bus.registerObject("/tracker", self._receiver, QDBusConnection.ExportAllSlots)
+
+            js_code = f"""
+function onActiveChanged(client) {{
+    var cls = client ? String(client.resourceClass || client.resourceName || client.caption || '') : '';
+    callDBus('{service_name}', '/tracker', '', 'update', cls);
+}}
+workspace.windowActivated.connect(onActiveChanged);
+onActiveChanged(workspace.activeWindow);
+
+var pollTimer = new QTimer();
+pollTimer.interval = 1000;
+pollTimer.timeout.connect(function() {{
+    onActiveChanged(workspace.activeWindow);
+}});
+pollTimer.start();
+"""
+            with open(self._kwin_script_file, "w", encoding="utf-8") as f:
+                f.write(js_code)
+
+            qdbus = "qdbus6" if shutil.which("qdbus6") else (shutil.which("qdbus") or "qdbus")
+            load_res = subprocess.run([qdbus, "org.kde.KWin", "/Scripting", "loadScript", self._kwin_script_file, self._kwin_script_name],
+                                      capture_output=True, text=True, timeout=1.0)
+            if load_res.returncode == 0:
+                subprocess.run([qdbus, "org.kde.KWin", "/Scripting", "start"],
+                               capture_output=True, text=True, timeout=1.0)
+                self._is_kwin_active = True
+                logger.info(f"GamescopeHostTracker initialized KWin scripting tracker: {self._kwin_script_name}")
+        except Exception as e:
+            logger.debug(f"Failed to initialize KWin tracker: {e}")
+
+    def is_gamescope_foreground(self) -> Optional[bool]:
+        if self._is_kwin_active:
+            if self._active_class is not None and self._active_class != "":
+                cls = self._active_class.lower()
+                return "gamescope" in cls or "鸣潮" in cls or "wuthering" in cls
+            return None
+
+        if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+            try:
+                res = subprocess.run(["hyprctl", "activewindow", "-j"], capture_output=True, text=True, timeout=0.2)
+                if res.returncode == 0:
+                    import json
+                    data = json.loads(res.stdout)
+                    return "gamescope" in data.get("class", "").lower()
+            except Exception:
+                pass
+
+        if os.environ.get("SWAYSOCK"):
+            try:
+                res = subprocess.run(["swaymsg", "-t", "get_tree"], capture_output=True, text=True, timeout=0.2)
+                if res.returncode == 0:
+                    import json
+                    tree = json.loads(res.stdout)
+
+                    def find_focused(node):
+                        if node.get("focused"):
+                            return node
+                        for child in node.get("nodes", []) + node.get("floating_nodes", []):
+                            f = find_focused(child)
+                            if f:
+                                return f
+                        return None
+
+                    focused = find_focused(tree)
+                    if focused:
+                        app_id = focused.get("app_id") or focused.get("window_properties", {}).get("class") or ""
+                        return "gamescope" in app_id.lower()
+            except Exception:
+                pass
+
+        return None
+
+    def focus_gamescope(self) -> bool:
+        if self._is_kwin_active:
+            try:
+                js = """
+var clients = workspace.windowList();
+for (var i = 0; i < clients.length; i++) {
+    if (clients[i].resourceClass === 'gamescope') {
+        workspace.activeWindow = clients[i];
+        break;
+    }
+}
+"""
+                pid = os.getpid()
+                fpath = os.path.join(tempfile.gettempdir(), f"ok_focus_{pid}.js")
+                with open(fpath, "w", encoding="utf-8") as f:
+                    f.write(js)
+                qdbus = "qdbus6" if shutil.which("qdbus6") else (shutil.which("qdbus") or "qdbus")
+                subprocess.run([qdbus, "org.kde.KWin", "/Scripting", "loadScript", fpath, f"ok_focus_{pid}"],
+                               capture_output=True, text=True, timeout=1.0)
+                subprocess.run([qdbus, "org.kde.KWin", "/Scripting", "start"],
+                               capture_output=True, text=True, timeout=1.0)
+                subprocess.run([qdbus, "org.kde.KWin", "/Scripting", "unloadScript", f"ok_focus_{pid}"],
+                               capture_output=True, text=True, timeout=1.0)
+                if os.path.exists(fpath):
+                    os.remove(fpath)
+                return True
+            except Exception as e:
+                logger.debug(f"focus_gamescope error: {e}")
+        return False
+
+    def close(self):
+        if self._is_kwin_active and self._kwin_script_name:
+            try:
+                from PySide6.QtDBus import QDBusConnection
+                bus = QDBusConnection.sessionBus()
+                if bus.isConnected():
+                    pid = os.getpid()
+                    bus.unregisterObject("/tracker")
+                    bus.unregisterService(f"com.okscript.tracker_{pid}")
+            except Exception:
+                pass
+            try:
+                qdbus = "qdbus6" if shutil.which("qdbus6") else (shutil.which("qdbus") or "qdbus")
+                subprocess.run([qdbus, "org.kde.KWin", "/Scripting", "unloadScript", self._kwin_script_name],
+                               capture_output=True, text=True, timeout=1.0)
+            except Exception:
+                pass
+            self._is_kwin_active = False
+        if self._kwin_script_file and os.path.exists(self._kwin_script_file):
+            try:
+                os.remove(self._kwin_script_file)
+            except Exception:
+                pass
 
 
 class LinuxWindow:
@@ -79,6 +255,13 @@ class LinuxWindow:
         self.real_width = 0
         self.real_height = 0
         self.hwnds = []
+        self.host_display = os.environ.get("DISPLAY") or ":0"
+        self._gamescope_tracker = None
+        if self._is_gamescope_session():
+            try:
+                self._gamescope_tracker = GamescopeHostTracker()
+            except Exception as e:
+                logger.debug(f"Failed to initialize GamescopeHostTracker: {e}")
 
         self._scan_window()
 
@@ -378,6 +561,7 @@ class LinuxWindow:
                 if changed:
                     logger.info(f"LinuxWindow detected game: {name} (0x{self.hwnd:x}) at ({self.x}, {self.y}) size: {self.width}x{self.height}")
                     if is_new_game:
+                        self._last_active = None
                         self._trigger_game_restart()
                     if self.device_manager:
                         device = self.device_manager.get_preferred_device()
@@ -434,9 +618,37 @@ class LinuxWindow:
     def get_capture_origin(self):
         return int(self.x), int(self.y)
 
+    def _get_gamescope_tracker(self):
+        if self._gamescope_tracker is None:
+            self._gamescope_tracker = GamescopeHostTracker()
+        return self._gamescope_tracker
+
+    def _is_gamescope_session(self) -> bool:
+        if self.current_display_name and self.current_display_name != getattr(self, "host_display", ":0"):
+            return True
+        if os.environ.get("GAMESCOPE_WAYLAND_DISPLAY"):
+            return True
+        if self.device_manager and getattr(self.device_manager, "window_interaction_class", None):
+            if getattr(self.device_manager.window_interaction_class, "name", "") == "libei":
+                return True
+        try:
+            if glob.glob(f"/run/user/{os.getuid()}/gamescope*"):
+                return True
+        except Exception:
+            pass
+        return False
+
     def is_foreground(self):
         if not self.exists or not self.display or not self.root:
             return False
+
+        if self._is_gamescope_session():
+            tracker = self._get_gamescope_tracker()
+            host_state = tracker.is_gamescope_foreground()
+            if host_state is not None:
+                return host_state
+            return True
+
         try:
             prop = self.root.get_full_property(self.display.intern_atom("_NET_ACTIVE_WINDOW"), 0)
             if prop and prop.value:
@@ -458,6 +670,12 @@ class LinuxWindow:
     def focus(self):
         if not self.exists or not self.window_obj or not self.display or not self.root:
             return False
+
+        if self._is_gamescope_session():
+            tracker = self._get_gamescope_tracker()
+            if tracker.focus_gamescope():
+                return True
+
         try:
             import Xlib.X
             import Xlib.protocol.event
@@ -515,6 +733,11 @@ class LinuxWindow:
                     self._last_active = is_active
                     logger.info(f"LinuxWindow foreground state changed: is_active={is_active}, setting mute={0 if is_active else 1}")
                     set_mute_state(self.hwnd, 0 if is_active else 1)
+                elif not is_active:
+                    self._mute_check_counter = getattr(self, "_mute_check_counter", 0) + 1
+                    if self._mute_check_counter >= 4:
+                        self._mute_check_counter = 0
+                        set_mute_state(self.hwnd, 1)
             else:
                 if self._last_active is not None:
                     self._last_active = None
@@ -551,6 +774,12 @@ class LinuxWindow:
 
     def stop(self):
         self.stop_event.set()
+        if self._gamescope_tracker:
+            try:
+                self._gamescope_tracker.close()
+            except Exception:
+                pass
+            self._gamescope_tracker = None
         if self.hwnd and self._get_mute_config_val():
             logger.info("LinuxWindow exit: resetting mute state to 0")
             set_mute_state(self.hwnd, 0)

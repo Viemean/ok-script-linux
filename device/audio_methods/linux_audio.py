@@ -48,8 +48,9 @@ class LinuxAudioController:
         app = str(sink_input.proplist.get("application.name", "")).lower()
         binary = str(sink_input.proplist.get("application.process.binary", "")).lower()
         media = str(sink_input.proplist.get("media.name", "")).lower()
+        node = str(sink_input.proplist.get("node.name", "")).lower()
         for target in self.target_names:
-            if target in app or target in binary or target in media:
+            if target in app or target in binary or target in media or target in node:
                 return True
         return False
 
