@@ -93,22 +93,22 @@ git submodule add -b master git@github.com:Viemean/ok-script-linux.git ok
 -    "ok-script==2.0.6",
 -    "pyautogui==...",
 -    "playwright==...",
-     "PySide6-Essentials==6.11.1",
-     "PySide6-Fluent-Widgets==1.10.5",
-     "PySideSix-Frameless-Window==0.7.3",
-     "onnxocr-ppocrv5==0.0.14",
-     "openvino==2026.0.0",
-     "opencv-python==4.12.0.88",
-     "numpy>=2.0.0",
-     "Pillow>=10.0.0",
-     "json5>=0.15.0",
-     "imagehash>=4.3.2",
+     "pyside6>=6.12.0",
+     "pyside6-fluent-widgets>=1.11.3",
+     "onnxocr-ppocrv6>=0.0.1",
+     "openvino>=2026.4.1",
+     "onnxruntime>=1.31.0",
+     "opencv-python>=5.0.0.93",
+     "numpy>=2.5.4",
+     "pillow>=13.0.0",
      "pynput>=1.8.2",
 +    "python-xlib>=0.33",
 +    "pulsectl>=24.12.0",
 +    "evdev>=2.0.0",
 +    "mss>=10.2.0",
-+    "psutil>=7.0.0",
++    "psutil>=7.2.2",
++    "adbutils>=2.12.0",
++    "polib>=1.2.0",
  ]
 -
 -[tool.uv]
@@ -167,12 +167,8 @@ Linux 自动化框架通过配置字典中的字段识别 Proton 游戏窗口、
      "hwnd_class": "TargetWindowClass",
 -    "interaction": [GameInteraction],
 -    "capture_method": ["WGC", "ForegroundBitBlt", "BitBlt"],
-+    "interaction": [
-+        "ok.device.interaction_methods.linux_proton_post_message.LinuxProtonPostMessageInteraction",
-+        "ok.device.interaction_methods.wine_agent_client.WineAgentInteraction",
-+        GameInteraction,
-+    ],
-+    "capture_method": ["LinuxVulkanCaptureMethod", "LinuxWindowCaptureMethod", "WGC", "ForegroundBitBlt", "BitBlt"],
++    "interaction": "PostMessage",
++    "capture_method": ["Vulkan", "X11_Direct"],
      "check_hdr": False,
      "force_no_hdr": False,
      "require_bg": True,
@@ -181,10 +177,10 @@ Linux 自动化框架通过配置字典中的字段识别 Proton 游戏窗口、
 
 ### 2. 字段配置原则
 
-- **`title`**：正则表达式，用于在 X11/XWayland 下匹配窗口标题（X11 下 Proton 容器中的窗口标题通常包含游戏英文名或窗口类名）。
-- **`audio_targets`**：音频流过滤白名单列表，填入游戏二进制可执行文件名（如 `TargetGame.exe`），框架在失焦时只静音此列表中的进程。
-- **`interaction`**：必须将 `LinuxProtonPostMessageInteraction` 与 `WineAgentInteraction` 置于首位；原有自定义业务交互类保留在后方兜底。
-- **`capture_method`**：必须将 `LinuxVulkanCaptureMethod`（Vulkan Layer 显存直读）与 `LinuxWindowCaptureMethod`（XSHM 共享内存）置于最前。
+- **`title`**：正则表达式，用于在 X11/XWayland 或 Gamescope 下匹配窗口标题（Proton 容器中的窗口标题通常包含游戏英文名或窗口类名）。
+- **`audio_targets`**：音频流过滤白名单列表，填入游戏二进制可执行文件名或进程前缀，框架在失焦时仅静音此列表中的进程。
+- **`interaction`**：在 Linux 下 `DeviceManager` 会自动注册 `['ProtonPostMessage', 'libei', 'UInput']`（兼容 `Pynput`），默认启用 `ProtonPostMessage`（`agent-post.exe` 后台投递）；Gamescope 环境可选 `libei`。
+- **`capture_method`**：优先使用 `['Vulkan', 'X11_Direct']`，其中 `Vulkan` 通过 `obs-vkcapture` 抽象域套接字直读显存，`X11_Direct`（XSHM）作为回退。
 
 ---
 

@@ -66,12 +66,8 @@
       "exe": ["TargetGame.exe"],
       "title": r"TargetGameTitleRegex",
       "audio_targets": ["TargetGame.exe"],
-      "interaction": [
-          "ok.device.interaction_methods.linux_proton_post_message.LinuxProtonPostMessageInteraction",
-          "ok.device.interaction_methods.wine_agent_client.WineAgentInteraction",
-      ],
-      "capture_method": ["LinuxWindowCaptureMethod"],
-      "start_method": "linux_proton",
+      "interaction": "PostMessage",
+      "capture_method": ["Vulkan", "X11_Direct"],
   }
   ```
 
