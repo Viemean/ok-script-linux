@@ -6,8 +6,18 @@ Start/Stop hotkey (F11 by default). Running a single task happens from the
 task pages; this bar never starts a specific task.
 """
 
+import os
+import selectors
+import threading
 import time
 from dataclasses import dataclass
+
+try:
+    import evdev
+    from evdev import ecodes as evdev_ecodes
+except ImportError:
+    evdev = None
+    evdev_ecodes = None
 
 from pynput import keyboard as pynput_keyboard
 
@@ -27,6 +37,120 @@ from ok.util.logger import Logger
 logger = Logger.get_logger(__name__)
 
 HOTKEY_OPTIONS = {'F9', 'F10', 'F11', 'F12'}
+HOTKEY_EVDEV_CODES = (
+    {
+        'F9': evdev_ecodes.KEY_F9,
+        'F10': evdev_ecodes.KEY_F10,
+        'F11': evdev_ecodes.KEY_F11,
+        'F12': evdev_ecodes.KEY_F12,
+    }
+    if evdev_ecodes is not None
+    else {}
+)
+
+
+class _EvdevHotkeyListener:
+    """Global hotkey listener backed by Linux /dev/input/event* via evdev."""
+
+    def __init__(self, key_code: int, callback):
+        self._key_code = key_code
+        self._callback = callback
+        self._stop_event = threading.Event()
+        self._wake_r, self._wake_w = os.pipe()
+        self._devices = self._open_devices(key_code)
+        if not self._devices:
+            self._close_pipe()
+            raise PermissionError("No readable evdev keyboard device found")
+        self._thread = threading.Thread(target=self._run, name="EvdevHotkeyListener", daemon=True)
+        self.daemon = True
+
+    @staticmethod
+    def _open_devices(key_code: int):
+        if evdev is None or evdev_ecodes is None:
+            return []
+        devices = []
+        for path in evdev.list_devices():
+            dev = None
+            try:
+                dev = evdev.InputDevice(path)
+                name = (dev.name or '').lower()
+                if 'ok-linux' in name:
+                    dev.close()
+                    continue
+                caps = dev.capabilities()
+                if key_code in caps.get(evdev_ecodes.EV_KEY, ()):
+                    devices.append(dev)
+                else:
+                    dev.close()
+            except Exception:
+                if dev is not None:
+                    try:
+                        dev.close()
+                    except Exception:
+                        pass
+        return devices
+
+    def _close_pipe(self):
+        for fd in (self._wake_r, self._wake_w):
+            if fd is not None:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+        self._wake_r = None
+        self._wake_w = None
+
+    def start(self):
+        self._thread.start()
+
+    def stop(self):
+        self._stop_event.set()
+        if self._wake_w is not None:
+            try:
+                os.write(self._wake_w, b'\x01')
+            except OSError:
+                pass
+        if self._thread.is_alive() and threading.current_thread() is not self._thread:
+            self._thread.join(timeout=1.0)
+        for dev in self._devices:
+            try:
+                dev.close()
+            except Exception:
+                pass
+        self._devices.clear()
+        self._close_pipe()
+
+    def _run(self):
+        selector = selectors.DefaultSelector()
+        try:
+            if self._wake_r is not None:
+                selector.register(self._wake_r, selectors.EVENT_READ, data=None)
+            for dev in self._devices:
+                selector.register(dev.fd, selectors.EVENT_READ, data=dev)
+            while not self._stop_event.is_set():
+                for key, _ in selector.select():
+                    dev = key.data
+                    if dev is None:
+                        return
+                    try:
+                        for event in dev.read():
+                            if (
+                                event.type == evdev_ecodes.EV_KEY
+                                and event.code == self._key_code
+                                and event.value == 1
+                            ):
+                                self._callback()
+                    except OSError:
+                        try:
+                            selector.unregister(key.fileobj)
+                        except Exception:
+                            pass
+                        try:
+                            dev.close()
+                        except Exception:
+                            pass
+        finally:
+            selector.close()
 
 
 def _t(context: str, text: str) -> str:
@@ -360,6 +484,15 @@ class RunBar(QFrame):
             self.linux_hotkey_listener = None
 
         if hotkey and hotkey != 'None' and hotkey in HOTKEY_OPTIONS:
+            evdev_code = HOTKEY_EVDEV_CODES.get(hotkey)
+            if evdev is not None and evdev_code is not None:
+                try:
+                    self.linux_hotkey_listener = _EvdevHotkeyListener(evdev_code, self.toggle_requested.emit)
+                    self.linux_hotkey_listener.start()
+                    logger.info(f"Registered Linux global hotkey via evdev: {hotkey}")
+                    return
+                except Exception as e:
+                    logger.warning(f"evdev hotkey {hotkey} unavailable ({e}), falling back to pynput")
             try:
                 key_tag = f"<{hotkey.lower()}>"
                 self.linux_hotkey_listener = pynput_keyboard.GlobalHotKeys({
@@ -367,7 +500,7 @@ class RunBar(QFrame):
                 })
                 self.linux_hotkey_listener.daemon = True
                 self.linux_hotkey_listener.start()
-                logger.info(f"Registered Linux global hotkey: {hotkey}")
+                logger.info(f"Registered Linux global hotkey via pynput: {hotkey}")
             except Exception as e:
                 logger.error(f"Failed to register Linux hotkey {hotkey}: {e}")
         else:
