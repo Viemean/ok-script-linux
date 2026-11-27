@@ -1,4 +1,4 @@
-import sys
+import threading
 import time
 
 from ok import Handler, og
@@ -6,7 +6,7 @@ from ok import Logger
 from ok.device.capture import BaseWindowsCaptureMethod, BrowserCaptureMethod
 from ok.core.events import communicate
 from ok.core.notifications import alert_error, alert_info
-from ok.util.process import is_admin, execute, WINDOWS_START_METHOD_START
+from ok.util.process import WINDOWS_START_METHOD_START
 
 logger = Logger.get_logger(__name__)
 
@@ -28,6 +28,74 @@ class StartController:
         self.start_method = windows_config.get('start_method', WINDOWS_START_METHOD_START)
         self.starting = False
 
+    @property
+    def _cancel_requested(self):
+        event = self.__dict__.get('_cancel_event')
+        if event is None:
+            event = self.__dict__['_cancel_event'] = threading.Event()
+        return event
+
+    @property
+    def _pending(self):
+        """Tasks requested by :meth:`start` that are not enabled yet, in request order."""
+        state = self.__dict__.get('_pending_state')
+        if state is None:
+            state = self.__dict__['_pending_state'] = (threading.Lock(), [])
+        return state
+
+    def is_task_pending(self, task):
+        """Whether ``task`` waits for the game to launch before it is queued."""
+        lock, tasks = self._pending
+        with lock:
+            return task in tasks
+
+    def _add_pending(self, task):
+        if task is None or isinstance(task, int):
+            return
+        lock, tasks = self._pending
+        with lock:
+            if task not in tasks:
+                tasks.append(task)
+        communicate.task.emit(task)
+
+    def _discard_pending(self, task):
+        if task is None or isinstance(task, int):
+            return False
+        lock, tasks = self._pending
+        with lock:
+            if task not in tasks:
+                return False
+            tasks.remove(task)
+        communicate.task.emit(task)
+        return True
+
+    def cancel_task(self, task):
+        """Drop a task that waits for the game to launch."""
+        if not self._discard_pending(task):
+            return False
+        logger.info(f'cancel pending start of {task}')
+        if self.__dict__.get('_active_task') is task:
+            self._cancel_requested.set()
+        return True
+
+    def cancel_start(self):
+        """Stop waiting for the game to launch and drop every task waiting for it."""
+        logger.info('cancel_start requested')
+        self._cancel_requested.set()
+        lock, tasks = self._pending
+        with lock:
+            dropped = list(tasks)
+            tasks.clear()
+        for task in dropped:
+            communicate.task.emit(task)
+
+    def _cancelled(self):
+        if self._cancel_requested.is_set():
+            logger.info('start cancelled while waiting for the game')
+            communicate.starting_emulator.emit(True, None, 0)
+            return True
+        return False
+
     def tr(self, message):
         app = getattr(og, "app", None)
         return app.tr(message) if app is not None else message
@@ -41,19 +109,42 @@ class StartController:
             logger.info(f"enabled task {task}")
         communicate.task.emit(task)
 
+    def _resolve_task(self, task):
+        if not isinstance(task, int):
+            return task
+        executor = getattr(og, 'executor', None)
+        tasks = getattr(executor, 'onetime_tasks', None)
+        try:
+            return tasks[task]
+        except (IndexError, TypeError):
+            return task
+
     def start(self, task=None, exit_after=False):
         self.starting = True
+        pending_task = self._resolve_task(task)
+        self._add_pending(pending_task)
         try:
-            self.handler.post(lambda: self.do_start(task, exit_after))
+            self.handler.post(lambda: self.do_start(pending_task, exit_after, from_queue=True))
         except Exception:
             self.starting = False
+            self._discard_pending(pending_task)
             raise
 
-    def do_start(self, task=None, exit_after=False):
+    def do_start(self, task=None, exit_after=False, from_queue=False):
+        if from_queue and task is not None and not isinstance(task, int) and not self.is_task_pending(task):
+            logger.info(f'do_start skipped, {task} was cancelled or already started')
+            return False
+        if not from_queue:
+            task = self._resolve_task(task)
+            self._add_pending(task)
         self.starting = True
+        self._cancel_requested.clear()
+        self.__dict__['_active_task'] = task
         try:
             return self._do_start(task, exit_after)
         finally:
+            self.__dict__['_active_task'] = None
+            self._discard_pending(task)
             self.starting = False
 
     def _do_start(self, task=None, exit_after=False):
@@ -116,10 +207,20 @@ class StartController:
                     logger.info(f"enable_after_start task {start_task}")
                     add_task_to_enable(start_task)
 
+            lock, pending = self._pending
+            with lock:
+                if task is not None and not isinstance(task, int) and task not in pending:
+                    logger.info(f'{task} was cancelled while the game was starting')
+                    task = None
+                waiting = list(pending)
+                pending.clear()
+
             if task:
                 add_task_to_enable(task)
                 if exit_after:
                     task.exit_after_task = True
+            for waiting_task in waiting:
+                add_task_to_enable(waiting_task)
 
             for task in tasks_to_enable:
                 self._mark_task_enabled(task)
@@ -136,6 +237,8 @@ class StartController:
         wait_until = time.time() + self.start_timeout
         first_check = True
         while not self.exit_event.is_set():
+            if self._cancelled():
+                return False
             if refresh_first or not first_check:
                 og.device_manager.do_refresh(True)
             first_check = False
@@ -195,7 +298,7 @@ class StartController:
         if not self._is_device_connected():
             logger.info("Game not connected, attempting to connect up to 3 times...")
             for attempt in range(1, 4):
-                if self.exit_event.is_set():
+                if self.exit_event.is_set() or self._cancelled():
                     return False
                 logger.info(f"Connecting to game, attempt {attempt}/3")
                 try:

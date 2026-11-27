@@ -56,9 +56,14 @@ UPDATE_METHOD_LABELS = {
 UPDATE_METHOD_VALUES = {value: label for label, value in UPDATE_METHOD_LABELS.items()}
 
 # [LINUX-PORT-CRITICAL] Linux 分支专属核心适配：剔除 DirectML、隐藏 Windows 启动项与启动器关闭选项，合并时严禁覆盖
+BASIC_GROUP_GAME = 'Game'
+BASIC_GROUP_TASKS = 'Tasks'
+BASIC_GROUP_APPLICATION = 'Application'
+BASIC_GROUP_DEVELOPER = 'Developer'
+BASIC_GROUP_BLUR = 'Blur'
+
 _basic_options_default = {
     ENABLE_MCP_SERVER: False,
-    'Auto Start Game When App Starts': False,
     'Minimize Window to System Tray when Closing': False,
     'Mute Game while in Background': False,
     'Auto Resize Game Window': True,
@@ -67,6 +72,20 @@ _basic_options_default = {
     'Capture Frame Rate Limit': 90,
     'ONNX Inference Threads': 4,
     'Start/Stop': 'F9',
+}
+_basic_options_group = {
+    'Exit App when Game Exits': BASIC_GROUP_GAME,
+    'Auto Resize Game Window': BASIC_GROUP_GAME,
+    'Mute Game while in Background': BASIC_GROUP_GAME,
+    'Start/Stop': BASIC_GROUP_TASKS,
+    'Trigger Interval': BASIC_GROUP_TASKS,
+    'Capture Frame Rate Limit': BASIC_GROUP_TASKS,
+    'ONNX Inference Threads': BASIC_GROUP_TASKS,
+    'Minimize Window to System Tray when Closing': BASIC_GROUP_APPLICATION,
+    ENABLE_MCP_SERVER: BASIC_GROUP_DEVELOPER,
+    'Enable Blur': BASIC_GROUP_BLUR,
+    'Blur Algorithm': BASIC_GROUP_BLUR,
+    'Blur Interval': BASIC_GROUP_BLUR,
 }
 _basic_options_type = {'Start/Stop': {'type': "drop_down", 'options': ['None', 'F9', 'F10', 'F11', 'F12']},
                        ENABLE_MCP_SERVER: {'type': 'mcp_server'},
@@ -90,6 +109,18 @@ _blur_options_description = {
 }
 
 
+def _apply_basic_option_groups(config_type, keys):
+    """Tag known Basic Options keys with their settings group, copying each type dict."""
+    for key in keys:
+        group = _basic_options_group.get(key)
+        if group is None:
+            continue
+        the_type = config_type.get(key)
+        if isinstance(the_type, dict) and the_type.get('hidden'):
+            continue
+        config_type[key] = {**(the_type if isinstance(the_type, dict) else {}), 'group': group}
+
+
 def create_basic_options(enable_blur=False):
     default = dict(_basic_options_default)
     config_type = dict(_basic_options_type)
@@ -98,6 +129,7 @@ def create_basic_options(enable_blur=False):
         default.update(_blur_options_default)
         config_type.update(_blur_options_type)
         description.update(_blur_options_description)
+    _apply_basic_option_groups(config_type, default)
     return ConfigOption('Basic Options', default, config_type=config_type,
                         config_description=description, icon=Icon.GAME)
 

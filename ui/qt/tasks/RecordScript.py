@@ -1,3 +1,4 @@
+import sys
 import time
 
 from pynput import mouse, keyboard
@@ -80,13 +81,21 @@ class Recorder:
 
     def get_relative_coords(self, x, y):
         try:
-            if getattr(og.device_manager, 'hwnd_window', None):
+            if getattr(og.device_manager, 'hwnd_window', None) and og.device_manager.hwnd_window.hwnd == self.target_hwnd:
                 hw = og.device_manager.hwnd_window
                 rel_x = x - (hw.x + hw.real_x_offset)
                 rel_y = y - (hw.y + hw.real_y_offset)
                 width = hw.real_width or hw.width
                 height = hw.real_height or hw.height
                 return self.normalize_coords(rel_x, rel_y, width, height)
+            if self.target_hwnd and sys.platform == 'win32':
+                import win32gui
+                # ClientToScreen with (0,0) gives the top-left of the content area in screen coordinates
+                client_pos = win32gui.ClientToScreen(self.target_hwnd, (0, 0))
+                left, top, right, bottom = win32gui.GetClientRect(self.target_hwnd)
+                width = right - left
+                height = bottom - top
+                return self.normalize_coords(x - client_pos[0], y - client_pos[1], width, height)
 
             return self.normalize_coords(x, y, getattr(og.device_manager, 'width', 0),
                                          getattr(og.device_manager, 'height', 0))
@@ -214,6 +223,12 @@ class Recorder:
                 exes_str = repr(exes) if len(exes) > 1 else repr(exes[0]) if exes else "''"
                 
                 hwnd_class = dm.windows_capture_config.get('hwnd_class')
+                if not hwnd_class and device.get('real_hwnd') and sys.platform == 'win32':
+                    try:
+                        import win32gui
+                        hwnd_class = win32gui.GetClassName(device.get('real_hwnd'))
+                    except Exception:
+                        pass
                 
                 init_lines.append(f"    'windows': {{")
                 if exes:

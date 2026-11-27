@@ -11,12 +11,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
 
-import requests
-
 from ok.core.script_packager import MAX_ARCHIVE_SIZE, inspect_script_archive
 from ok.util.version import compare_versions
 
 PLUGIN_SOURCE_FILE = '.ok-plugin-source.json'
+
+
+def _requests():
+    import requests
+    return requests
 
 
 def import_plugin_class(folder, entry):
@@ -62,7 +65,7 @@ def github_repository(value):
 def github_release_assets(repository, session=None):
     """Find uploaded plugin archives, preferring a stable published release."""
     owner, name = github_repository(repository)
-    client = session or requests
+    client = session or _requests()
     response = client.get(
         f'https://api.github.com/repos/{owner}/{name}/releases',
         params={'per_page': 20}, headers={'Accept': 'application/vnd.github+json'}, timeout=(10, 30),
@@ -157,7 +160,7 @@ def plugin_update_assets(entry, session=None):
 
 
 def download_plugin(asset, session=None):
-    client = session or requests
+    client = session or _requests()
     url = asset['url']
     parsed = urlparse(url)
     if parsed.scheme != 'https' or parsed.netloc.lower() != 'github.com':

@@ -80,6 +80,17 @@ class Logger:
         return stack_trace_str
 
 
+class _PrefixAdapter(logging.LoggerAdapter):
+    def process(self, msg, kwargs):
+        return f"{self.extra['name']}:{msg}", kwargs
+
+
+def get_std_logger(name: str) -> logging.LoggerAdapter:
+    """Return a standard-library logger writing to ok's handlers."""
+    _ensure_default_console_logger()
+    return _PrefixAdapter(_ok_logger, {'name': name.split('.')[-1]})
+
+
 def _log_exception_handler(exc_type, exc_value, exc_traceback):
     if _ok_logger is not None:
         tb_lines = traceback.format_exception(exc_type, exc_value, exc_traceback)

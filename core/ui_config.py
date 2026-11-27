@@ -2,10 +2,10 @@ from pathlib import Path
 
 
 DEFAULT_WINDOW_SIZE = {
-    "width": 1200,
-    "height": 800,
-    "min_width": 1200,
-    "min_height": 800,
+    "width": 1560,
+    "height": 820,
+    "min_width": 1560,
+    "min_height": 820,
 }
 
 GUI_TYPES = {"qt"}

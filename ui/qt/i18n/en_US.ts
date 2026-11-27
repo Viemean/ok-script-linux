@@ -488,6 +488,54 @@
             <source>Import failed: {error}</source>
             <translation>Import failed: {error}</translation>
         </message>
+        <message>
+            <source>Develop</source>
+            <translation>Develop</translation>
+        </message>
+        <message>
+            <source>Diagnosis</source>
+            <translation>Diagnosis</translation>
+        </message>
+        <message>
+            <source>Disconnect</source>
+            <translation>Disconnect</translation>
+        </message>
+        <message>
+            <source>Game</source>
+            <translation>Game</translation>
+        </message>
+        <message>
+            <source>Log</source>
+            <translation>Log</translation>
+        </message>
+        <message>
+            <source>Remote Control</source>
+            <translation>Remote Control</translation>
+        </message>
+        <message>
+            <source>Run</source>
+            <translation>Run</translation>
+        </message>
+        <message>
+            <source>Success</source>
+            <translation>Success</translation>
+        </message>
+        <message>
+            <source>{owner} is controlling the app. Other tasks are stopped.</source>
+            <translation>{owner} is controlling the app. Other tasks are stopped.</translation>
+        </message>
+        <message>
+            <source>Cancel</source>
+            <translation>Cancel</translation>
+        </message>
+        <message>
+            <source>New version available</source>
+            <translation>New version available</translation>
+        </message>
+        <message>
+            <source>Version {version} is available.</source>
+            <translation>Version {version} is available.</translation>
+        </message>
     </context>
     <context>
         <name>MessageWindow</name>
@@ -541,6 +589,10 @@
         <message>
             <source>Search options...</source>
             <translation>Search options...</translation>
+        </message>
+        <message>
+            <source>Edit List</source>
+            <translation>Edit List</translation>
         </message>
     </context>
     <context>
@@ -647,6 +699,14 @@
             <source>Only use when using AutoHDR (Not Recommended)</source>
             <translation>Only use when using AutoHDR (Not Recommended)</translation>
         </message>
+        <message>
+            <source>Vulkan - Shared-memory capture via obs-vkcapture (Recommended)</source>
+            <translation>Vulkan - Shared-memory capture via obs-vkcapture (Recommended)</translation>
+        </message>
+        <message>
+            <source>X11_Direct - X11 MIT-SHM direct window capture</source>
+            <translation>X11_Direct - X11 MIT-SHM direct window capture</translation>
+        </message>
     </context>
     <context>
         <name>SettingTab</name>
@@ -726,6 +786,26 @@
             <source>Configuration takes effect after restart</source>
             <translation>Configuration takes effect after restart</translation>
         </message>
+        <message>
+            <source>Window Material</source>
+            <translation>Window Material</translation>
+        </message>
+        <message>
+            <source>Mica tints the window with your wallpaper, Acrylic blurs what is behind it</source>
+            <translation>Mica tints the window with your wallpaper, Acrylic blurs what is behind it</translation>
+        </message>
+        <message>
+            <source>Mica</source>
+            <translation>Mica</translation>
+        </message>
+        <message>
+            <source>Acrylic</source>
+            <translation>Acrylic</translation>
+        </message>
+        <message>
+            <source>None</source>
+            <translation>None</translation>
+        </message>
     </context>
     <context>
         <name>StartButton</name>
@@ -796,17 +876,9 @@
             <source>Waiting for task to be enabled</source>
             <translation>Waiting for task to be enabled</translation>
         </message>
-        <message>
-            <source>Get Launch Args</source>
-            <translation>Get Launch Args</translation>
-        </message>
     </context>
     <context>
         <name>StartController</name>
-        <message>
-            <source>Game is not running or game process not detected, please start the game first!</source>
-            <translation>Game is not running or game process not detected, please start the game first!</translation>
-        </message>
         <message>
             <source>Start game failed, please start game first</source>
             <translation>Start game failed, please start game first</translation>
@@ -906,6 +978,14 @@
         <message>
             <source>Try using Alt+F3 to turn it off.</source>
             <translation>Try using Alt+F3 to turn it off.</translation>
+        </message>
+        <message>
+            <source>Game is not running or game process not detected, please start the game first!</source>
+            <translation>Game is not running or game process not detected, please start the game first!</translation>
+        </message>
+        <message>
+            <source>Game is running, but Vulkan capture layer is not active. Please launch the game with OBS_VKCAPTURE=1, or switch the Capture Method to X11_Direct.</source>
+            <translation>Game is running, but Vulkan capture layer is not active. Please launch the game with OBS_VKCAPTURE=1, or switch the Capture Method to X11_Direct.</translation>
         </message>
     </context>
     <context>
@@ -1008,6 +1088,10 @@
         <message>
             <source>Please Start First</source>
             <translation>Please Start First</translation>
+        </message>
+        <message>
+            <source>Browser</source>
+            <translation>Browser</translation>
         </message>
     </context>
     <context>
@@ -1688,6 +1772,30 @@
             <translation>QQ channel ID to receive notifications</translation>
         </message>
         <message>
+            <source>PushPlus Notification</source>
+            <translation>PushPlus Notification</translation>
+        </message>
+        <message>
+            <source>PushPlus Token</source>
+            <translation>PushPlus Token</translation>
+        </message>
+        <message>
+            <source>PushPlus Topic</source>
+            <translation>PushPlus Topic</translation>
+        </message>
+        <message>
+            <source>Send notifications through PushPlus (pushplus.plus)</source>
+            <translation>Send notifications through PushPlus (pushplus.plus)</translation>
+        </message>
+        <message>
+            <source>User or message token from pushplus.plus</source>
+            <translation>User or message token from pushplus.plus</translation>
+        </message>
+        <message>
+            <source>Optional group code; leave empty to send only to yourself</source>
+            <translation>Optional group code; leave empty to send only to yourself</translation>
+        </message>
+        <message>
             <source>Choose where notifications are delivered. Notifications always appear in the app; enable any additional providers you want to receive them.</source>
             <translation>Choose where notifications are delivered. Notifications always appear in the app; enable any additional providers you want to receive them.</translation>
         </message>
@@ -1912,6 +2020,156 @@
             <translation>Paused because browser exited</translation>
         </message>
         <message>
+            <source>Create Start Menu Shortcut</source>
+            <translation>Create Start Menu Shortcut</translation>
+        </message>
+        <message>
+            <source>Create Desktop Shortcut</source>
+            <translation>Create Desktop Shortcut</translation>
+        </message>
+        <message>
+            <source>Create or update the Start Menu shortcut when the app starts</source>
+            <translation>Create or update the Start Menu shortcut when the app starts</translation>
+        </message>
+        <message>
+            <source>Create or update the Desktop shortcut when the app starts</source>
+            <translation>Create or update the Desktop shortcut when the app starts</translation>
+        </message>
+        <message>
+            <source>Game</source>
+            <translation>Game</translation>
+        </message>
+        <message>
+            <source>Tasks</source>
+            <translation>Tasks</translation>
+        </message>
+        <message>
+            <source>Application</source>
+            <translation>Application</translation>
+        </message>
+        <message>
+            <source>Shortcuts</source>
+            <translation>Shortcuts</translation>
+        </message>
+        <message>
+            <source>Developer</source>
+            <translation>Developer</translation>
+        </message>
+        <message>
+            <source>Other</source>
+            <translation>Other</translation>
+        </message>
+        <message>
+            <source>Created or updated shortcuts: {paths}</source>
+            <translation>Created or updated shortcuts: {paths}</translation>
+        </message>
+        <message>
+            <source>Bark Notification</source>
+            <translation>Bark Notification</translation>
+        </message>
+        <message>
+            <source>Bark Server URL</source>
+            <translation>Bark Server URL</translation>
+        </message>
+        <message>
+            <source>Bark Device Key</source>
+            <translation>Bark Device Key</translation>
+        </message>
+        <message>
+            <source>Bark Group</source>
+            <translation>Bark Group</translation>
+        </message>
+        <message>
+            <source>Bark Sound</source>
+            <translation>Bark Sound</translation>
+        </message>
+        <message>
+            <source>Bark Level</source>
+            <translation>Bark Level</translation>
+        </message>
+        <message>
+            <source>Bark Archive</source>
+            <translation>Bark Archive</translation>
+        </message>
+        <message>
+            <source>Send notifications through the Bark iOS app</source>
+            <translation>Send notifications through the Bark iOS app</translation>
+        </message>
+        <message>
+            <source>Bark server URL; do not change unless needed</source>
+            <translation>Bark server URL; do not change unless needed</translation>
+        </message>
+        <message>
+            <source>Device key registered in the Bark app</source>
+            <translation>Device key registered in the Bark app</translation>
+        </message>
+        <message>
+            <source>Notification group; leave empty to send without a group</source>
+            <translation>Notification group; leave empty to send without a group</translation>
+        </message>
+        <message>
+            <source>Ringtone name; leave empty to use the app default</source>
+            <translation>Ringtone name; leave empty to use the app default</translation>
+        </message>
+        <message>
+            <source>Normal: display immediately and wake the screen
+Passive: notification list only
+Time Sensitive: show during Focus
+Critical: sound even in silent mode</source>
+            <translation>Normal: display immediately and wake the screen
+Passive: notification list only
+Time Sensitive: show during Focus
+Critical: sound even in silent mode</translation>
+        </message>
+        <message>
+            <source>Whether to save notifications in Bark history</source>
+            <translation>Whether to save notifications in Bark history</translation>
+        </message>
+        <message>
+            <source>App Default</source>
+            <translation>App Default</translation>
+        </message>
+        <message>
+            <source>Save</source>
+            <translation>Save</translation>
+        </message>
+        <message>
+            <source>Do Not Save</source>
+            <translation>Do Not Save</translation>
+        </message>
+        <message>
+            <source>active</source>
+            <translation>active</translation>
+        </message>
+        <message>
+            <source>passive</source>
+            <translation>passive</translation>
+        </message>
+        <message>
+            <source>timeSensitive</source>
+            <translation>timeSensitive</translation>
+        </message>
+        <message>
+            <source>Bark Icon</source>
+            <translation>Bark Icon</translation>
+        </message>
+        <message>
+            <source>Bark URL</source>
+            <translation>Bark URL</translation>
+        </message>
+        <message>
+            <source>Notification icon URL; leave empty to use the app default icon</source>
+            <translation>Notification icon URL; leave empty to use the app default icon</translation>
+        </message>
+        <message>
+            <source>Link to open when the notification is tapped</source>
+            <translation>Link to open when the notification is tapped</translation>
+        </message>
+        <message>
+            <source>critical</source>
+            <translation>Critical alert</translation>
+        </message>
+        <message>
             <source>Capture Frame Rate Limit</source>
             <translation>Capture Frame Rate Limit</translation>
         </message>
@@ -2092,6 +2350,26 @@
         <message>
             <source>Cancel</source>
             <translation>Cancel</translation>
+        </message>
+        <message>
+            <source>Modify</source>
+            <translation>Modify</translation>
+        </message>
+        <message>
+            <source>Modify Schedule Task</source>
+            <translation>Modify Schedule Task</translation>
+        </message>
+        <message>
+            <source>Task Index (-t)</source>
+            <translation>Task Index (-t)</translation>
+        </message>
+        <message>
+            <source>Task Name</source>
+            <translation>Task Name</translation>
+        </message>
+        <message>
+            <source>Windows runs the app with this task at the chosen time, even when it is closed.</source>
+            <translation>Windows runs the app with this task at the chosen time, even when it is closed.</translation>
         </message>
     </context>
     <context>
@@ -2287,6 +2565,26 @@
             <source>Failed to create task</source>
             <translation>Failed to create task</translation>
         </message>
+        <message>
+            <source>Current App</source>
+            <translation>Current App</translation>
+        </message>
+        <message>
+            <source>No scheduled tasks</source>
+            <translation>No scheduled tasks</translation>
+        </message>
+        <message>
+            <source>Run a task every day, week or month without opening the app.</source>
+            <translation>Run a task every day, week or month without opening the app.</translation>
+        </message>
+        <message>
+            <source>Task Schedule</source>
+            <translation>Task Schedule</translation>
+        </message>
+        <message>
+            <source>Windows Task Scheduler starts the app and runs these tasks, even when the app is closed.</source>
+            <translation>Windows Task Scheduler starts the app and runs these tasks, even when the app is closed.</translation>
+        </message>
     </context>
     <context>
         <name>MarkUpWindow</name>
@@ -2309,6 +2607,26 @@
         <message>
             <source>Right click to copy color</source>
             <translation>Right click to copy color</translation>
+        </message>
+        <message>
+            <source>Features</source>
+            <translation>Features</translation>
+        </message>
+        <message>
+            <source>Next image (→)</source>
+            <translation>Next image (→)</translation>
+        </message>
+        <message>
+            <source>No features yet. Press R and click two corners to draw one.</source>
+            <translation>No features yet. Press R and click two corners to draw one.</translation>
+        </message>
+        <message>
+            <source>Previous image (←)</source>
+            <translation>Previous image (←)</translation>
+        </message>
+        <message>
+            <source>Scroll to zoom  ·  Drag empty space to pan  ·  Drag a box to move it, its edges to resize  ·  Right click to copy the color  ·  Changes save automatically</source>
+            <translation>Scroll to zoom  ·  Drag empty space to pan  ·  Drag a box to move it, its edges to resize  ·  Right click to copy the color  ·  Changes save automatically</translation>
         </message>
     </context>
     <context>
@@ -2348,6 +2666,10 @@
         <message>
             <source>Already exists in '{}'</source>
             <translation>Already exists in '{}'</translation>
+        </message>
+        <message>
+            <source>Name the feature tasks will look for.</source>
+            <translation>Name the feature tasks will look for.</translation>
         </message>
     </context>
     <context>
@@ -2944,6 +3266,46 @@
             <source>Error copying task: {error}</source>
             <translation>Error copying task: {error}</translation>
         </message>
+        <message>
+            <source>Class Name (English only)</source>
+            <translation>Class Name (English only)</translation>
+        </message>
+        <message>
+            <source>Click a call to insert it at the cursor.</source>
+            <translation>Click a call to insert it at the cursor.</translation>
+        </message>
+        <message>
+            <source>Confirm</source>
+            <translation>Confirm</translation>
+        </message>
+        <message>
+            <source>Create a task from scratch or copy an existing one to start.</source>
+            <translation>Create a task from scratch or copy an existing one to start.</translation>
+        </message>
+        <message>
+            <source>Description (Optional)</source>
+            <translation>Description (Optional)</translation>
+        </message>
+        <message>
+            <source>Don't Save</source>
+            <translation>Don't Save</translation>
+        </message>
+        <message>
+            <source>No scripts yet</source>
+            <translation>No scripts yet</translation>
+        </message>
+        <message>
+            <source>Select task to copy...</source>
+            <translation>Select task to copy...</translation>
+        </message>
+        <message>
+            <source>Task Name</source>
+            <translation>Task Name</translation>
+        </message>
+        <message>
+            <source>Templates</source>
+            <translation>Templates</translation>
+        </message>
     </context>
     <context>
         <name>CreateTaskDialog</name>
@@ -3121,6 +3483,10 @@
             <source>Could not write screenshot to {path}</source>
             <translation>Could not write screenshot to {path}</translation>
         </message>
+        <message>
+            <source>Take a screenshot of the game, then mark up the features tasks should find.</source>
+            <translation>Take a screenshot of the game, then mark up the features tasks should find.</translation>
+        </message>
     </context>
     <context>
         <name>TemplateInputDialog</name>
@@ -3163,6 +3529,14 @@
             <source>BrowserInteraction</source>
             <translation>BrowserInteraction - Background</translation>
         </message>
+        <message>
+            <source>Default Interaction</source>
+            <translation>Default Interaction</translation>
+        </message>
+        <message>
+            <source>WindowsInteraction</source>
+            <translation>WindowsInteraction</translation>
+        </message>
     </context>
     <context>
         <name>ImportWarningDialog</name>
@@ -3196,6 +3570,22 @@
         <message>
             <source>Confirm Delete</source>
             <translation>Confirm Delete</translation>
+        </message>
+        <message>
+            <source>Copy annotation</source>
+            <translation>Copy annotation</translation>
+        </message>
+        <message>
+            <source>Copy color</source>
+            <translation>Copy color</translation>
+        </message>
+        <message>
+            <source>Delete</source>
+            <translation>Delete</translation>
+        </message>
+        <message>
+            <source>Modify</source>
+            <translation>Modify</translation>
         </message>
     </context>
     <context>
@@ -3316,6 +3706,10 @@
         <message>
             <source>Download</source>
             <translation>Download</translation>
+        </message>
+        <message>
+            <source>Switch</source>
+            <translation>Switch</translation>
         </message>
     </context>
     <context>
@@ -3443,6 +3837,14 @@
             <source>The release archive is not a newer plugin version</source>
             <translation>The release archive is not a newer plugin version</translation>
         </message>
+        <message>
+            <source>Add a plugin from a ZIP file or a GitHub release.</source>
+            <translation>Add a plugin from a ZIP file or a GitHub release.</translation>
+        </message>
+        <message>
+            <source>From GitHub: {}</source>
+            <translation>From GitHub: {}</translation>
+        </message>
     </context>
     <context>
         <name>LabelAndMcpServer</name>
@@ -3479,58 +3881,206 @@
         </message>
     </context>
     <context>
-        <name>ProtonLaunchWidget</name>
+        <name>ConnectionPopover</name>
         <message>
-            <source>Game Launch Options</source>
-            <translation>Game Launch Options</translation>
+            <source>Game window</source>
+            <translation>Game window</translation>
         </message>
         <message>
-            <source>Game Executable Path:</source>
-            <translation>Game Executable Path:</translation>
+            <source>Open folder</source>
+            <translation>Open folder</translation>
+        </message>
+    </context>
+    <context>
+        <name>DiagnosisPage</name>
+        <message>
+            <source>Boxes</source>
+            <translation>Boxes</translation>
         </message>
         <message>
-            <source>Absolute path to {exe}</source>
-            <translation>Absolute path to {exe}</translation>
+            <source>Captures, OCR results and task screenshots appear here.</source>
+            <translation>Captures, OCR results and task screenshots appear here.</translation>
         </message>
         <message>
-            <source>Proton/Wine Prefix Directory:</source>
-            <translation>Proton/Wine Prefix Directory:</translation>
+            <source>Developer</source>
+            <translation>Developer</translation>
         </message>
         <message>
-            <source>e.g. ~/.steam/steam/steamapps/compatdata/&lt;AppID&gt;/pfx or ~/Games/prefix</source>
-            <translation>e.g. ~/.steam/steam/steamapps/compatdata/&lt;AppID&gt;/pfx or ~/Games/prefix</translation>
+            <source>Dump Threads</source>
+            <translation>Dump Threads</translation>
         </message>
         <message>
-            <source>Launch Arguments:</source>
-            <translation>Launch Arguments:</translation>
+            <source>No screenshot yet. Capture one to see it here.</source>
+            <translation>No screenshot yet. Capture one to see it here.</translation>
         </message>
         <message>
-            <source>e.g. -dx11, -dx12, -screen-fullscreen 0</source>
-            <translation>e.g. -dx11, -dx12, -screen-fullscreen 0</translation>
+            <source>No text found</source>
+            <translation>No text found</translation>
         </message>
         <message>
-            <source>Command Wrapper (Optional):</source>
-            <translation>Command Wrapper (Optional):</translation>
+            <source>Open</source>
+            <translation>Open</translation>
         </message>
         <message>
-            <source>e.g. gamemoderun mangohud umu-run</source>
-            <translation>e.g. gamemoderun mangohud umu-run</translation>
+            <source>Open image</source>
+            <translation>Open image</translation>
         </message>
         <message>
-            <source>Custom Environment Variables (KEY=VALUE):</source>
-            <translation>Custom Environment Variables (KEY=VALUE):</translation>
+            <source>Open screenshot folder</source>
+            <translation>Open screenshot folder</translation>
         </message>
         <message>
-            <source>Select Game Executable</source>
-            <translation>Select Game Executable</translation>
+            <source>Original</source>
+            <translation>Original</translation>
         </message>
         <message>
-            <source>Windows Executable (*.exe);;All Files (*)</source>
-            <translation>Windows Executable (*.exe);;All Files (*)</translation>
+            <source>Recent</source>
+            <translation>Recent</translation>
         </message>
         <message>
-            <source>Select Proton/Wine Prefix Directory</source>
-            <translation>Select Proton/Wine Prefix Directory</translation>
+            <source>Run OCR on the current frame and save a screenshot with the text boxes</source>
+            <translation>Run OCR on the current frame and save a screenshot with the text boxes</translation>
+        </message>
+        <message>
+            <source>Saved to {path}</source>
+            <translation>Saved to {path}</translation>
+        </message>
+        <message>
+            <source>Screenshots</source>
+            <translation>Screenshots</translation>
+        </message>
+        <message>
+            <source>Show in folder</source>
+            <translation>Show in folder</translation>
+        </message>
+        <message>
+            <source>Write every thread's stack to logs/thread_dumps.txt</source>
+            <translation>Write every thread's stack to logs/thread_dumps.txt</translation>
+        </message>
+    </context>
+    <context>
+        <name>Dialog</name>
+        <message>
+            <source>Cancel</source>
+            <translation>Cancel</translation>
+        </message>
+        <message>
+            <source>OK</source>
+            <translation>OK</translation>
+        </message>
+    </context>
+    <context>
+        <name>LogPage</name>
+        <message>
+            <source>Jump to latest</source>
+            <translation>Jump to latest</translation>
+        </message>
+        <message>
+            <source>lines</source>
+            <translation>lines</translation>
+        </message>
+    </context>
+    <context>
+        <name>NavigationView</name>
+        <message>
+            <source>Collapse</source>
+            <translation>Collapse</translation>
+        </message>
+        <message>
+            <source>Expand</source>
+            <translation>Expand</translation>
+        </message>
+    </context>
+    <context>
+        <name>RunBar</name>
+        <message>
+            <source>+{count} queued</source>
+            <translation>+{count} queued</translation>
+        </message>
+        <message>
+            <source>Cancel</source>
+            <translation>Cancel</translation>
+        </message>
+        <message>
+            <source>Cancel this task</source>
+            <translation>Cancel this task</translation>
+        </message>
+        <message>
+            <source>Game</source>
+            <translation>Game</translation>
+        </message>
+        <message>
+            <source>Launches the game if needed, then runs triggers and queued tasks</source>
+            <translation>Launches the game if needed, then runs triggers and queued tasks</translation>
+        </message>
+        <message>
+            <source>Launching {name}</source>
+            <translation>Launching {name}</translation>
+        </message>
+        <message>
+            <source>No game selected</source>
+            <translation>No game selected</translation>
+        </message>
+        <message>
+            <source>Pause {name}</source>
+            <translation>Pause {name}</translation>
+        </message>
+        <message>
+            <source>Start {name}</source>
+            <translation>Start {name}</translation>
+        </message>
+    </context>
+    <context>
+        <name>TaskDetail</name>
+        <message>
+            <source>This task has no settings.</source>
+            <translation>This task has no settings.</translation>
+        </message>
+    </context>
+    <context>
+        <name>TasksPage</name>
+        <message>
+            <source>All</source>
+            <translation>All</translation>
+        </message>
+        <message>
+            <source>More actions</source>
+            <translation>More actions</translation>
+        </message>
+        <message>
+            <source>On-demand</source>
+            <translation>On-demand</translation>
+        </message>
+        <message>
+            <source>Paused</source>
+            <translation>Paused</translation>
+        </message>
+        <message>
+            <source>Queued</source>
+            <translation>Queued</translation>
+        </message>
+        <message>
+            <source>Run task</source>
+            <translation>Run task</translation>
+        </message>
+        <message>
+            <source>Select a task to see its settings.</source>
+            <translation>Select a task to see its settings.</translation>
+        </message>
+        <message>
+            <source>Settings</source>
+            <translation>Settings</translation>
+        </message>
+        <message>
+            <source>Triggers</source>
+            <translation>Triggers</translation>
+        </message>
+    </context>
+    <context>
+        <name>Toast</name>
+        <message>
+            <source>Close</source>
+            <translation>Close</translation>
         </message>
     </context>
 </TS>

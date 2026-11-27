@@ -7,7 +7,12 @@ import sys
 from pathlib import Path
 from typing import NamedTuple, Optional
 
-import pyappify
+try:
+    import pyappify
+except ImportError:
+    pyappify = None
+
+from ok.util.version import compare_versions
 
 logger = logging.getLogger("ok")
 
@@ -22,6 +27,20 @@ class StartupVersionChange(NamedTuple):
     action: str
     from_version: str
     to_version: str
+
+
+def display_version(version, pyappify_module=pyappify):
+    """The version to show; a git checkout shows its branch or pr# instead.
+
+    A checkout's own version is only a placeholder such as "dev", so it is
+    dropped. A version tag at the checked-out commit is real and follows the
+    branch.
+    """
+    ref = getattr(pyappify_module, "app_ref", None)
+    if not ref:
+        return version or ""
+    tag = getattr(pyappify_module, "app_version", None)
+    return f"{ref} · {tag}" if tag and tag != ref else ref
 
 
 def _get_pyappify_value(pyappify_module, attr_name, env_name):
@@ -40,12 +59,8 @@ def _is_greater_version(pyappify_module, version1, version2):
             )
 
     try:
-        version1 = version1.lstrip("v")
-        version2 = version2.lstrip("v")
-        v1_parts = [int(part) for part in version1.split(".")]
-        v2_parts = [int(part) for part in version2.split(".")]
-        return v1_parts > v2_parts
-    except (ValueError, AttributeError):
+        return compare_versions(version1, version2) > 0
+    except ValueError:
         return False
 
 
