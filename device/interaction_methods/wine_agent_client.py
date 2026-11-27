@@ -175,6 +175,7 @@ class WineAgentClient:
             self.proc = subprocess.Popen(
                 cmd,
                 env=wine_env,
+                stdin=subprocess.DEVNULL,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 preexec_fn=os.setsid
