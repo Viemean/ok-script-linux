@@ -547,6 +547,10 @@
             <source>Version {version} is available.</source>
             <translation>버전 {version}을(를) 사용할 수 있습니다.</translation>
         </message>
+        <message>
+            <source>Show</source>
+            <translation>창 표시</translation>
+        </message>
     </context>
     <context>
         <name>MessageWindow</name>

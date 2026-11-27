@@ -536,6 +536,10 @@
             <source>Version {version} is available.</source>
             <translation>版本 {version} 已发布。</translation>
         </message>
+        <message>
+            <source>Show</source>
+            <translation>显示窗口</translation>
+        </message>
     </context>
     <context>
         <name>MessageWindow</name>

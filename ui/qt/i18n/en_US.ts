@@ -536,6 +536,10 @@
             <source>Version {version} is available.</source>
             <translation>Version {version} is available.</translation>
         </message>
+        <message>
+            <source>Show</source>
+            <translation>Show</translation>
+        </message>
     </context>
     <context>
         <name>MessageWindow</name>

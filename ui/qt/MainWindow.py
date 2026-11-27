@@ -250,6 +250,8 @@ class MainWindow(KitWindow):
         communicate.executor_exclusive.connect(self.executor_exclusive_changed)
         communicate.tab.connect(self.navigate_tab)
         menu = QMenu()
+        show_action = menu.addAction(self.tr("Show"))
+        show_action.triggered.connect(self.bring_to_front)
         exit_action = menu.addAction(self.tr("Exit"))
         exit_action.triggered.connect(self.tray_quit)
 
@@ -477,16 +479,12 @@ class MainWindow(KitWindow):
 
     def on_tray_icon_activated(self, reason):
         """Handles clicks on the system tray icon."""
-        if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            logger.info('main window on_tray_icon_activated QSystemTrayIcon.ActivationReason.Trigger')
+        if reason in (QSystemTrayIcon.ActivationReason.Trigger, QSystemTrayIcon.ActivationReason.DoubleClick):
+            logger.info(
+                f'main window on_tray_icon_activated {reason} self.isVisible():{self.isVisible()}')
+            self.bring_to_front()
         elif reason == QSystemTrayIcon.ActivationReason.MiddleClick:
             logger.info('main window on_tray_icon_activated QSystemTrayIcon.ActivationReason.MiddleClick')
-        elif reason == QSystemTrayIcon.ActivationReason.DoubleClick:
-            logger.info(
-                f'main window on_tray_icon_activated QSystemTrayIcon.ActivationReason.DoubleClick self.isVisible():{self.isVisible()}')
-            self.showNormal()
-            self.raise_()
-            self.activateWindow()
 
     def bring_to_front(self):
         if self.isMinimized():

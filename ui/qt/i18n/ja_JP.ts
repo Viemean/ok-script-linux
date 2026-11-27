@@ -546,6 +546,10 @@
             <source>Version {version} is available.</source>
             <translation>バージョン {version} が利用可能です。</translation>
         </message>
+        <message>
+            <source>Show</source>
+            <translation>ウィンドウを表示</translation>
+        </message>
     </context>
     <context>
         <name>MessageWindow</name>
