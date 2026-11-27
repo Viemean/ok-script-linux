@@ -39,18 +39,19 @@ def _get_c_convert_lib():
 
         if not os.path.exists(so_path) and os.path.exists(c_path):
             os.makedirs(os.path.dirname(so_path), exist_ok=True)
-            res = subprocess.run(
-                ["gcc", "-O3", "-march=native", "-fPIC", "-shared", c_path, "-o", so_path],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            if res.returncode != 0:
-                subprocess.run(
-                    ["gcc", "-O3", "-fPIC", "-shared", c_path, "-o", so_path],
-                    check=True,
+            for flags in (
+                ["-O3", "-march=native", "-fopenmp"],
+                ["-O3", "-fopenmp"],
+                ["-O3", "-march=native"],
+                ["-O3"],
+            ):
+                res = subprocess.run(
+                    ["gcc", *flags, "-fPIC", "-shared", c_path, "-o", so_path],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
+                if res.returncode == 0:
+                    break
 
         if os.path.exists(so_path):
             lib = ctypes.cdll.LoadLibrary(so_path)

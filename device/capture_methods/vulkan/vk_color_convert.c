@@ -2,6 +2,9 @@
 #include <stddef.h>
 
 void ab30_to_bgr24(const uint32_t *src, uint8_t *dst, int width, int height, int stride_pixels) {
+#ifdef _OPENMP
+#pragma omp parallel for num_threads(2) schedule(static)
+#endif
     for (int y = 0; y < height; y++) {
         const uint32_t *__restrict__ row_src = src + (size_t)y * stride_pixels;
         uint8_t *__restrict__ row_dst = dst + (size_t)y * width * 3;
